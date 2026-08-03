@@ -64,6 +64,12 @@ export async function getSession(request: Request, env: Env, create = true): Pro
       maxAge: SESSION_TTL_SECONDS,
       secure: new URL(request.url).protocol === 'https:',
     });
+
+    // Persist immediately. Handing out a cookie for a session that isn't in KV
+    // means the next request finds nothing, mints another one, and the id keeps
+    // changing — which quietly breaks anything keyed by session id, including
+    // job ownership and the job history index.
+    await env.SESSIONS.put(kvKey(id), JSON.stringify(data), { expirationTtl: SESSION_TTL_SECONDS });
   }
 
   const ctx: SessionContext = {
