@@ -54,7 +54,7 @@ The KV namespace, both Durable Objects and the static assets are all declared in
 6. **Deploy again** so the secrets are picked up: Worker → **Deployments →
    Retry / Redeploy**.
 
-7. **Check it:** visit `https://postcleaner.<your-subdomain>.workers.dev/api/health`.
+7. **Check it:** visit `https://xpostdeleter.<your-subdomain>.workers.dev/api/health`.
    You want `"configured": true`.
 
 **To deploy later:** push to `main` (editing any file in the GitHub web UI counts),
@@ -191,3 +191,10 @@ base64 of 32 bytes. A hex string or a passphrase will not work.
 
 **Workers Builds can't see the repo** — the Cloudflare GitHub app needs access
 granted to that specific repository, not just the account.
+
+**Secrets are set but the app still says `configured: false`, or the Worker
+exists with no code** — the `name` in `wrangler.toml` must match the Worker you
+added the secrets to. Workers Builds names the Worker after the repository, so
+if `wrangler.toml` says something else, `wrangler deploy` quietly creates a
+*second* Worker and your secrets stay on the first one. This repo is pinned to
+`xpostdeleter` to match. If you rename the Worker, rename it here too.

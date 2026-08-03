@@ -104,7 +104,7 @@ The "Edit Cloudflare Workers" template covers the first two.
 A token missing these fails with `Authentication error [code: 10000]` on deploy
 while `whoami` still works, which is a confusing pair of symptoms.
 
-`wrangler deploy` prints your URL, e.g. `https://postcleaner.<subdomain>.workers.dev`.
+`wrangler deploy` prints your URL, e.g. `https://xpostdeleter.<subdomain>.workers.dev`.
 
 Optionally set `PUBLIC_BASE_URL` in `wrangler.toml` to that URL. Leave it empty and the origin is
 derived from the incoming request, which is correct for almost every setup but not if you sit
