@@ -29,7 +29,7 @@ import type {
   ItemOutcome,
 } from '../types';
 import { compileFilters, matchesFilters, sanitizeItem } from '../lib/filters';
-import { seal, unseal } from '../lib/crypto';
+import { seal, unseal, SealedDataError } from '../lib/crypto';
 import { reserveQuota, settleQuota } from './Wallet';
 import { recordShard } from '../lib/appmeter';
 import {
@@ -146,7 +146,14 @@ export class DeletionJob implements DurableObject {
   private async getCredentials(): Promise<JobCredentials | null> {
     const sealed = await this.ctx.storage.get<string>('cred');
     if (!sealed) return null;
-    return unseal<JobCredentials>(sealed, this.env.TOKEN_ENCRYPTION_KEY);
+    try {
+      return await unseal<JobCredentials>(sealed, this.env.TOKEN_ENCRYPTION_KEY);
+    } catch (err) {
+      // The key rotated. Retrying can never succeed, so report it the same way
+      // as missing credentials rather than burning the backoff ladder on it.
+      if (err instanceof SealedDataError) return null;
+      throw err;
+    }
   }
 
   private async putCredentials(creds: JobCredentials): Promise<void> {

@@ -93,14 +93,43 @@ export async function seal(value: unknown, base64Key: string): Promise<string> {
   return toBase64Url(out);
 }
 
+/**
+ * Thrown when sealed data cannot be opened — almost always because
+ * TOKEN_ENCRYPTION_KEY changed since it was written.
+ *
+ * Distinguishable on purpose: Web Crypto's own failure is an opaque
+ * OperationError, and callers need to turn this into "reconnect your account"
+ * rather than retrying a decryption that can never succeed.
+ */
+export class SealedDataError extends Error {
+  constructor(message = 'Stored credentials could not be decrypted.') {
+    super(message);
+    this.name = 'SealedDataError';
+  }
+}
+
 export async function unseal<T>(sealed: string, base64Key: string): Promise<T> {
   const key = await aesKey(base64Key);
-  const raw = fromBase64Url(sealed);
-  if (raw.length < 13) throw new Error('Sealed payload is malformed.');
-  const iv = raw.slice(0, 12);
-  const ct = raw.slice(12);
-  const plaintext = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
-  return JSON.parse(decoder.decode(plaintext)) as T;
+  let raw: Uint8Array;
+  try {
+    raw = fromBase64Url(sealed);
+  } catch {
+    throw new SealedDataError('Sealed payload is not valid base64url.');
+  }
+  if (raw.length < 13) throw new SealedDataError('Sealed payload is malformed.');
+
+  try {
+    const plaintext = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: raw.slice(0, 12) },
+      key,
+      raw.slice(12),
+    );
+    return JSON.parse(decoder.decode(plaintext)) as T;
+  } catch {
+    throw new SealedDataError(
+      'Stored credentials could not be decrypted. This happens when TOKEN_ENCRYPTION_KEY has changed since they were saved.',
+    );
+  }
 }
 
 /* --------------------------------- PKCE ---------------------------------- */

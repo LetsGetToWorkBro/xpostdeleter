@@ -7,7 +7,7 @@
 import type { Env, JobKind, JobLogEntry, JobSnapshot, JobSource, Provider } from '../types';
 import type { JobCredentials } from '../do/DeletionJob';
 import { HttpError, badRequest, json, notFound, readJson, text, unauthorized } from '../lib/http';
-import { randomId, unseal } from '../lib/crypto';
+import { randomId, unseal, SealedDataError } from '../lib/crypto';
 import { indexJob, listJobs, ownsJob, type SessionContext } from '../lib/session';
 import { sanitizeFilters } from '../lib/filters';
 import { mirrorJob, supabaseEnabled } from '../lib/supabase';
@@ -62,6 +62,24 @@ async function assertOwner(env: Env, session: SessionContext, jobId: string): Pr
 /* -------------------------------------------------------------------------- */
 
 async function buildCredentials(
+  env: Env,
+  session: SessionContext,
+  kind: JobKind,
+  pageId?: string,
+): Promise<JobCredentials> {
+  try {
+    return await buildCredentialsInner(env, session, kind, pageId);
+  } catch (err) {
+    if (err instanceof SealedDataError) {
+      throw unauthorized(
+        'Your saved connection can no longer be read (the server encryption key changed). Disconnect and reconnect the account to continue — nothing else is affected.',
+      );
+    }
+    throw err;
+  }
+}
+
+async function buildCredentialsInner(
   env: Env,
   session: SessionContext,
   kind: JobKind,

@@ -430,8 +430,30 @@ to `.dev.vars` (git-ignored).
 | `SESSION_SECRET` | HMAC key that signs the session cookie. Any long random string: `openssl rand -hex 32` |
 | `TOKEN_ENCRYPTION_KEY` | AES-256-GCM key for encrypting OAuth tokens at rest. **Must decode to exactly 32 bytes**: `openssl rand -base64 32` |
 
-Rotating `TOKEN_ENCRYPTION_KEY` invalidates every stored token — users reconnect, and running jobs
-stop with a "credentials unavailable" message.
+Rotating `TOKEN_ENCRYPTION_KEY` invalidates every stored token. The app degrades cleanly rather
+than erroring: `/api/session` still lists connections, starting a job returns a 401 telling the
+user to reconnect, running jobs stop with "credentials no longer available", and disconnect still
+works so they can recover. Nothing retries a decryption that can never succeed.
+
+### Do these need storing anywhere?
+
+Cloudflare secrets are **write-only** — you cannot read them back, only overwrite them. That
+sounds alarming and mostly isn't:
+
+| Secret | Keep a copy? | Why |
+|---|---|---|
+| `SESSION_SECRET` | **No** | If it's ever lost, set a new one. Everyone gets a fresh session cookie; nothing else breaks. |
+| `TOKEN_ENCRYPTION_KEY` | **No** | Same: set a new one and users reconnect. A copy in a notes app is strictly worse security than no copy at all. |
+| `ADMIN_TOKEN` | **Yes** | You need to send it to call `/api/admin/*`. Password manager. |
+| `X_CLIENT_SECRET`, `STRIPE_SECRET_KEY`, `FACEBOOK_APP_SECRET`, `THREADS_APP_SECRET` | **No** | The provider's dashboard is the source of truth — view or regenerate there. |
+| `CLOUDFLARE_API_TOKEN` | **No** | Regenerate it in the Cloudflare dashboard if you need it again. |
+
+The only genuine reason to keep `TOKEN_ENCRYPTION_KEY` is migrating to a different Worker or
+account while keeping existing sessions and in-flight jobs alive. If that matters to you, put it
+in a password manager — never in the repo, a note, or a chat message.
+
+Never copy production secret values into `.dev.vars`. Local development should use its own
+throwaway values; the file is git-ignored, but the point is that a laptop is not Cloudflare.
 
 ### Optional
 

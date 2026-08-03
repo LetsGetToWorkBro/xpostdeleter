@@ -113,6 +113,37 @@ running job.
 
 ---
 
+## Do I need to save these secrets anywhere?
+
+Almost certainly **no**.
+
+Cloudflare secrets are write-only — you can set them and overwrite them, but you
+can never read them back. That is a feature, not a problem, because nothing in
+this app ever needs you to recall those values:
+
+- **`SESSION_SECRET`** — if it's ever gone, set a new one. Everyone gets a fresh
+  session cookie. That's the entire consequence.
+- **`TOKEN_ENCRYPTION_KEY`** — set a new one and users reconnect their accounts.
+  In-flight jobs stop with a "reconnect" message rather than breaking oddly.
+
+Writing either into a notes app on your phone is *worse* security than having no
+copy at all. Leave them in Cloudflare.
+
+Two exceptions:
+
+- **`ADMIN_TOKEN`** — you have to send this to use `/api/admin/*`, so keep it in
+  a password manager.
+- Anything from a provider (**X**, **Stripe**, **Facebook**, **Threads**, and
+  your **Cloudflare API token**) — don't store it here either, because the
+  provider's own dashboard is the source of truth. View or regenerate it there.
+
+The one scenario where keeping `TOKEN_ENCRYPTION_KEY` matters: moving to a
+different Worker or Cloudflare account and wanting existing logins and running
+jobs to survive the move. If that's a real possibility, put it in a password
+manager — never in the repo, a note, or a chat message.
+
+---
+
 ## Once it's live
 
 You need nothing else to test the full X flow. Without `X_CLIENT_ID` and
