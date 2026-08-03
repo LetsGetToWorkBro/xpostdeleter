@@ -324,7 +324,7 @@ export async function estimate(request: Request, env: Env, _session: SessionCont
   const durationMs = windows > 0 ? (windows - 1) * limits.windowMs + count * 500 : 0;
 
   const isX = kind === 'x_posts' || kind === 'x_likes';
-  const costUsd = isX && !body.dryRun ? count * X_PRICING.writeUsd + reads * X_PRICING.postReadUsd : 0;
+  const costUsd = isX && !body.dryRun ? count * X_PRICING.deleteUsd + reads * X_PRICING.postReadUsd : 0;
 
   return json({
     count,

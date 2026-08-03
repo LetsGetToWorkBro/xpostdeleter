@@ -437,7 +437,7 @@ export class DeletionJob implements DurableObject {
   private updateCost(state: JobState): void {
     if (state.kind !== 'x_posts' && state.kind !== 'x_likes') return;
     const reads = state.discovery.reads * X_PRICING.postReadUsd;
-    const writes = state.dryRun ? 0 : (state.deleted + state.failed) * X_PRICING.writeUsd;
+    const writes = state.dryRun ? 0 : (state.deleted + state.failed) * X_PRICING.deleteUsd;
     state.costEstimateUsd = Number((reads + writes).toFixed(4));
   }
 

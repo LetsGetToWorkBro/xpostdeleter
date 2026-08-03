@@ -41,10 +41,23 @@ export const X_RATE_LIMITS = {
  * are trivially adjustable — always check your own developer dashboard.
  */
 export const X_PRICING = {
+  /** "Posts: Read" — $0.005 per resource. Only spent on the API-scan path. */
   postReadUsd: 0.005,
+  /** "User: Read" — $0.010 per resource. One call at connect time. */
   userReadUsd: 0.01,
-  /** Deletes are write operations; X has not published a separate delete price. */
-  writeUsd: 0.015,
+  /**
+   * Deleting a post.
+   *
+   * X's published write table has no explicit "Post: Delete" row. The two
+   * candidates are "Interaction: Delete" ($0.010) and "Content: Manage"
+   * ($0.005); third-party reporting since the Feb 2026 change consistently
+   * describes $0.01 per delete, so we plan against the pessimistic number.
+   * $0.015 is the *create* price and does not apply here.
+   *
+   * Verify against your own billing dashboard before quoting anyone a price —
+   * this single constant decides whether a paid tier makes money.
+   */
+  deleteUsd: 0.01,
   currency: 'USD',
 } as const;
 
