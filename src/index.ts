@@ -14,10 +14,13 @@ import { HttpError, badRequest, errorResponse, json, notFound } from './lib/http
 import { getSession, withSession, type SessionContext } from './lib/session';
 import * as Auth from './routes/auth';
 import * as Jobs from './routes/jobs';
+import * as Billing from './routes/billing';
+import * as Calibration from './routes/calibration';
 import { loadPreferences, savePreferences, supabaseEnabled } from './lib/supabase';
 import { publicConnection } from './lib/session';
 
 export { DeletionJob } from './do/DeletionJob';
+export { Wallet } from './do/Wallet';
 
 const PROVIDERS: Provider[] = ['x', 'facebook', 'threads'];
 
@@ -89,6 +92,18 @@ async function handleApi(request: Request, env: Env, url: URL, session: SessionC
     return json({ connected: Boolean(conn), pages: publicConnection(conn)?.pages ?? [] });
   }
 
+  // ---- billing -----------------------------------------------------------
+  if (path === '/api/billing/pricing' && method === 'GET') return Billing.getPricing(request, env, session);
+  if (path === '/api/billing/quote' && method === 'POST') return Billing.postQuote(request, env, session);
+  if (path === '/api/billing/wallet' && method === 'GET') return Billing.getWallet(request, env, session);
+  if (path === '/api/billing/checkout' && method === 'POST') return Billing.postCheckout(request, env, session);
+  if (path === '/api/billing/confirm' && method === 'POST') return Billing.postConfirm(request, env, session);
+
+  // ---- calibration (see docs/CALIBRATION.md) ------------------------------
+  if (path === '/api/x/probe' && method === 'POST') return Calibration.postProbe(request, env, session);
+  if (path === '/api/admin/appmeter' && method === 'GET') return Calibration.getAppMeter(request, env);
+  if (path === '/api/admin/grant' && method === 'POST') return Billing.postGrant(request, env);
+
   // ---- jobs --------------------------------------------------------------
   if (path === '/api/estimate' && method === 'POST') return Jobs.estimate(request, env, session);
 
@@ -143,6 +158,17 @@ export default {
     const url = new URL(request.url);
     const isApi = url.pathname.startsWith('/api/');
     const isAuth = url.pathname.startsWith('/auth/');
+
+    // Stripe signs the raw body and sends no cookie or Origin — it must be
+    // routed before session handling, and verified purely by HMAC.
+    if (url.pathname === '/api/billing/webhook') {
+      if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, { status: 405 });
+      try {
+        return await Billing.postWebhook(request, env);
+      } catch (err) {
+        return errorResponse(err);
+      }
+    }
 
     if (url.pathname === '/api/health') {
       return json({

@@ -9,6 +9,8 @@ export interface Env {
   ASSETS: Fetcher;
   SESSIONS: KVNamespace;
   DELETION_JOB: DurableObjectNamespace;
+  /** Purchased deletion quota, one instance per X account. */
+  WALLET: DurableObjectNamespace;
 
   // Vars
   APP_NAME: string;
@@ -27,6 +29,16 @@ export interface Env {
   THREADS_APP_SECRET?: string;
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
+
+  // Billing. Presence of STRIPE_SECRET_KEY is what enables managed mode.
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
+  /** Point at stripe-mock or a stub for testing. Defaults to the real API. */
+  STRIPE_API_BASE?: string;
+  /** Override the assumed X per-delete cost once you've measured it. */
+  X_DELETE_UNIT_COST_USD?: string;
+  /** Guards the operator-only calibration + grant endpoints. */
+  ADMIN_TOKEN?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -48,6 +60,12 @@ export interface Connection {
   sealedTokens: string;
   /** Sealed JSON of the OAuth client the user brought, when applicable. */
   sealedClient?: string;
+  /**
+   * True when this connection went through *our* X app rather than the user's
+   * own. Managed connections bill against purchased quota; bring-your-own
+   * connections are free to us because the user pays X directly.
+   */
+  managed?: boolean;
   /** For Facebook: the pages we are allowed to manage. */
   pages?: FacebookPage[];
 }
@@ -82,6 +100,8 @@ export interface PendingAuth {
   sealedClient?: string;
   redirectUri: string;
   scopes: string[];
+  /** X only: true when this flow used the operator's shared (billed) app. */
+  managed?: boolean;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -216,6 +236,37 @@ export interface JobState {
   costEstimateUsd?: number;
 
   label?: string;
+
+  /* ---------------------------- metering ---------------------------- */
+
+  /** True when this job spends purchased quota (i.e. runs on our X app). */
+  metered: boolean;
+  /** X account id the quota is drawn from — the Wallet DO key. */
+  billingAccountId?: string;
+  /**
+   * Cumulative deletions reserved from the wallet. The job stops when
+   * `billableRequests` reaches this, no matter how much work is left. Topping
+   * up and resuming reserves again and raises this.
+   * 0 means unmetered (bring-your-own-app, or a dry run).
+   */
+  allowance: number;
+  /**
+   * Real DELETE calls made. X bills per *request*, so this counts attempts —
+   * including ones that came back 404 or failed. Dry runs never increment it.
+   */
+  billableRequests: number;
+  /**
+   * How much of `billableRequests` has already been reported to the wallet.
+   * The difference is what a settle still owes, which keeps the accounting
+   * correct across pause → top up → resume cycles.
+   */
+  settledRequests: number;
+  /**
+   * Times X returned 429 while this job's own per-user window still had budget.
+   * That combination is the signature of an *app*-level cap, which is the thing
+   * we need to know before betting a business on managed mode.
+   */
+  appThrottleEvents: number;
 }
 
 /** The shape the browser polls / receives over the WebSocket. */

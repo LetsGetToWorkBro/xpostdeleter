@@ -32,12 +32,27 @@ preview_id = "REPLACE_WITH_YOUR_PREVIEW_KV_NAMESPACE_ID"
 name = "DELETION_JOB"
 class_name = "DeletionJob"
 
+# Purchased deletion quota, one instance per X account. Separate from the job
+# DO on purpose: quota outlives any single job, and money needs its own actor
+# so reserve/settle is atomic.
+[[durable_objects.bindings]]
+name = "WALLET"
+class_name = "Wallet"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["DeletionJob"]
 
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Wallet"]
+
 [vars]
 APP_NAME = "PostCleaner"
+# What X charges us per delete, in USD. X publishes no explicit "Post: Delete"
+# price — measure it with /api/x/probe and set the real value here. See
+# docs/CALIBRATION.md. Every price tier and margin figure derives from this.
+X_DELETE_UNIT_COST_USD = "0.01"
 # Set this to your deployed origin, e.g. "https://postcleaner.example.workers.dev".
 # Leave empty to derive the origin from the incoming request (fine for most setups,
 # but an explicit value is safer when you sit behind a proxy).
@@ -57,6 +72,10 @@ PUBLIC_BASE_URL = ""
 #   X_CLIENT_SECRET           optional  their own client id/secret in the UI
 #   SUPABASE_URL              optional  job history mirror
 #   SUPABASE_SERVICE_ROLE_KEY optional
+#
+#   STRIPE_SECRET_KEY         optional  enables the paid "managed" X mode
+#   STRIPE_WEBHOOK_SECRET     optional  whsec_... from the webhook endpoint
+#   ADMIN_TOKEN               optional  guards /api/admin/* (appmeter, grants)
 #
 # Generate the two required ones:
 #   openssl rand -base64 32   # TOKEN_ENCRYPTION_KEY

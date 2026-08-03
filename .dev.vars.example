@@ -29,6 +29,22 @@ TOKEN_ENCRYPTION_KEY=replace-me-with-base64-of-32-random-bytes
 # THREADS_APP_ID=
 # THREADS_APP_SECRET=
 
+# ---- Stripe (optional — enables the paid "managed" X mode) --------------------
+# Without these, the app is bring-your-own-app only and says so in the UI.
+# No products/prices need to exist in your Stripe catalog: checkout sessions are
+# created with inline price_data from the tiers in src/lib/billing.ts.
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
+# Point at stripe-mock or a stub to exercise billing locally.
+# STRIPE_API_BASE=http://localhost:8123
+
+# Guards /api/admin/appmeter and /api/admin/grant.
+# ADMIN_TOKEN=
+
+# What X charges us per delete. MEASURE IT — see docs/CALIBRATION.md. Every price
+# tier and margin figure in the app derives from this single number.
+# X_DELETE_UNIT_COST_USD=0.01
+
 # ---- Supabase (entirely optional) --------------------------------------------
 # Mirrors job history so it outlives the 30-day session. The app works fine
 # without it — jobs live in Durable Objects either way.

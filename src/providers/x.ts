@@ -360,6 +360,66 @@ export async function deleteTweet(accessToken: string, tweetId: string): Promise
   }
 }
 
+/**
+ * Calibration probe: delete exactly one post and report everything X tells us.
+ *
+ * X does not publish a "Post: Delete" price and does not return billing data on
+ * the response, so the only way to learn the real unit cost is to spend one
+ * credit and read the meter. This makes that a single call: note your credit
+ * balance, run this, note it again. The difference is the answer.
+ *
+ * Also dumps the full rate-limit header set, which is what tells you whether
+ * the ceiling you hit is the per-user one or something app-wide.
+ */
+export async function probeDelete(
+  accessToken: string,
+  tweetId: string,
+): Promise<{
+  ok: boolean;
+  status: number;
+  alreadyGone: boolean;
+  durationMs: number;
+  rateHeaders: Record<string, string>;
+  rate: XRateInfo;
+  body: unknown;
+  error?: string;
+}> {
+  const started = Date.now();
+  const headers = new Headers({
+    authorization: `Bearer ${accessToken}`,
+    'user-agent': 'PostCleaner/1.0 (calibration probe)',
+  });
+  const res = await fetch(`${X_API}/tweets/${encodeURIComponent(tweetId)}`, { method: 'DELETE', headers });
+  const durationMs = Date.now() - started;
+
+  const rateHeaders: Record<string, string> = {};
+  res.headers.forEach((value, key) => {
+    // Everything X exposes about limits, verbatim — including any header we
+    // don't currently model, which is exactly what a probe is for.
+    if (/^x-(rate|app|user|account)/i.test(key)) rateHeaders[key] = value;
+  });
+
+  const raw = await res.text();
+  let body: unknown = null;
+  try {
+    body = raw ? JSON.parse(raw) : null;
+  } catch {
+    body = raw.slice(0, 400);
+  }
+
+  const alreadyGone = res.status === 404 || res.status === 400;
+  return {
+    ok: res.ok,
+    status: res.status,
+    alreadyGone,
+    durationMs,
+    rateHeaders,
+    rate: readRateHeaders(res),
+    body,
+    error: res.ok ? undefined : (await describeError(new Response(raw, { status: res.status }))).message,
+  };
+}
+
 export async function unlikeTweet(accessToken: string, userId: string, tweetId: string): Promise<DeleteOutcome> {
   try {
     const { json, rate } = await xFetch(

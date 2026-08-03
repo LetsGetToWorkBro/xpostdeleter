@@ -88,7 +88,14 @@ async function api(path, { method = 'GET', body, raw = false } = {}) {
   });
   if (raw) return res;
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.error?.message || `Request failed (${res.status}).`);
+  if (!res.ok) {
+    const err = new Error(data?.error?.message || `Request failed (${res.status}).`);
+    // Callers branch on these — e.g. a 402 is a checkout prompt, not a failure.
+    err.code = data?.error?.code;
+    err.details = data?.error?.details;
+    err.status = res.status;
+    throw err;
+  }
   return data;
 }
 
@@ -96,7 +103,8 @@ async function api(path, { method = 'GET', body, raw = false } = {}) {
 
 const state = {
   session: null,
-  x: { source: 'archive', items: [], filtered: [], account: null, jobId: null },
+  x: { source: 'archive', items: [], filtered: [], account: null, jobId: null, mode: 'managed' },
+  billing: { pricing: null, wallet: null, quote: null },
   threads: { jobId: null },
   facebook: { pages: [], selectedPage: null, jobId: null },
 };
@@ -379,6 +387,17 @@ class JobMonitor {
       if (cancelBtn) cancelBtn.disabled = done;
     }
 
+    const quotaBox = this.el('job-quota');
+    if (quotaBox) {
+      quotaBox.innerHTML = job.metered && job.allowance
+        ? `<div class="notice info">${icon('i-info', 17)}<div>
+             Metered job: <strong>${fmtNum(job.billableRequests)}</strong> of
+             <strong>${fmtNum(job.allowance)}</strong> purchased deletions used.
+             ${job.status === 'completed' ? 'Anything unused has been returned to your balance.' : 'Unused quota comes back when the job ends.'}
+           </div></div>`
+        : '';
+    }
+
     const errBox = this.el('job-error');
     if (errBox) {
       if (job.lastError && job.status !== 'completed') {
@@ -412,6 +431,185 @@ class JobMonitor {
   }
 }
 
+
+/* ============================================================= BILLING ==== */
+
+/**
+ * Managed mode means we run the deletions on our own X app — no developer
+ * account for the user, but X bills us per delete. So the price is quoted from
+ * the exact archive count (which we already have, for free, client-side) before
+ * anything runs, and quota is reserved up front so a job can never overspend.
+ */
+
+function billingAvailable() {
+  return Boolean(state.session?.capabilities?.billing && state.session?.capabilities?.xManagedApp);
+}
+
+function isManagedConnection() {
+  return state.session?.connections?.x?.managed === true;
+}
+
+async function loadPricing() {
+  try {
+    state.billing.pricing = await api('/api/billing/pricing');
+  } catch {
+    state.billing.pricing = null;
+  }
+}
+
+async function loadWallet() {
+  if (!state.session?.connections?.x) {
+    state.billing.wallet = null;
+    return null;
+  }
+  try {
+    state.billing.wallet = await api('/api/billing/wallet');
+  } catch {
+    state.billing.wallet = null;
+  }
+  return state.billing.wallet;
+}
+
+function renderPricingTable() {
+  const box = $('#x-pricing-table');
+  if (!box) return;
+  const pricing = state.billing.pricing;
+  if (!pricing?.enabled || !pricing.tiers?.length) {
+    box.innerHTML = '';
+    return;
+  }
+  box.innerHTML = `
+    <div class="preview" style="max-height:none">
+      <table>
+        <thead><tr><th>Pack</th><th>Posts</th><th style="text-align:right">Price</th></tr></thead>
+        <tbody>
+          ${pricing.tiers.map((t) => `
+            <tr>
+              <td>${escapeHtml(t.label)}</td>
+              <td class="num">up to ${fmtNum(t.quota)}</td>
+              <td class="num" style="text-align:right">${fmtMoney(t.priceCents / 100)}</td>
+            </tr>`).join('')}
+          <tr>
+            <td>Beyond that</td>
+            <td class="num">any size</td>
+            <td class="num" style="text-align:right">${fmtMoney(pricing.overageCentsPerDelete / 100)}/post</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tiny faint" style="margin-top:8px">
+      One-time, no subscription. Unused deletions stay in your balance, and a dry run is always free.
+    </p>`;
+}
+
+/** How many deletions this job will need to reserve. */
+function neededForCurrentJob() {
+  return state.x.source === 'archive' ? state.x.filtered.length : Number($('#x-api-max').value) || 0;
+}
+
+/**
+ * The quota panel on the run step. Three states: nothing to say (BYO or dry
+ * run), covered by existing balance, or short and needing a purchase.
+ */
+async function renderQuotaPanel() {
+  const panel = $('#x-quota-panel');
+  if (!panel) return;
+
+  const managed = isManagedConnection();
+  const dryRun = $('#x-dry-run').checked;
+
+  if (!managed || dryRun) {
+    panel.hidden = true;
+    panel.innerHTML = '';
+    return;
+  }
+
+  const needed = neededForCurrentJob();
+  const wallet = state.billing.wallet ?? (await loadWallet());
+  const balance = wallet?.balance ?? 0;
+  panel.hidden = false;
+
+  if (!needed) {
+    panel.innerHTML = `<div class="notice info">${icon('i-info', 17)}<div>
+      Set how many posts to scan, or load an archive, and the exact price appears here before anything runs.
+    </div></div>`;
+    return;
+  }
+
+  if (balance >= needed) {
+    panel.innerHTML = `<div class="notice success">${icon('i-check', 17)}<div>
+      <strong>Covered by your balance.</strong> This job needs ${fmtNum(needed)} deletions and you have
+      ${fmtNum(balance)} left. They are reserved when the job starts and anything unused comes straight back.
+    </div></div>`;
+    return;
+  }
+
+  const shortfall = needed - balance;
+  let quote = null;
+  try {
+    quote = (await api('/api/billing/quote', { method: 'POST', body: { count: shortfall } })).quote;
+  } catch {
+    /* fall through to a priceless panel rather than blocking */
+  }
+  state.billing.quote = quote;
+
+  panel.innerHTML = `
+    <div class="notice info">${icon('i-info', 17)}<div>
+      <strong>${fmtNum(needed)} posts selected${balance ? `, ${fmtNum(balance)} already in your balance` : ''}.</strong>
+      ${quote ? `You need ${fmtNum(shortfall)} more — the ${escapeHtml(quote.tierLabel)} pack covers ${fmtNum(quote.quota)} for <strong>${fmtMoney(quote.priceCents / 100)}</strong>.` : ''}
+      <div class="tiny faint" style="margin-top:6px">
+        X charges us for every post we delete for you, and retired its free tier in February 2026. This is that cost plus our margin —
+        no subscription, and a dry run costs nothing.
+      </div>
+      <button class="btn btn-primary btn-sm" id="x-buy" style="margin-top:11px">
+        ${icon('i-link', 14)} ${quote ? `Buy ${fmtNum(quote.quota)} deletions — ${fmtMoney(quote.priceCents / 100)}` : 'Buy deletions'}
+      </button>
+    </div>`;
+
+  $('#x-buy')?.addEventListener('click', () => startCheckout(shortfall));
+}
+
+async function startCheckout(count) {
+  const btn = $('#x-buy');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Opening checkout…`;
+  }
+  try {
+    const { url } = await api('/api/billing/checkout', { method: 'POST', body: { count } });
+    // Full redirect, not a popup — popups get blocked and Stripe wants the top frame.
+    location.href = url;
+  } catch (err) {
+    toast(err.message, 'error', 9000);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Buy deletions';
+    }
+  }
+}
+
+/**
+ * Credit a purchase the moment the browser returns from Stripe, so the balance
+ * is there before the page settles. The webhook does the same thing server-side
+ * and the wallet dedupes, so neither path can double-credit.
+ */
+async function confirmPurchase(checkoutSessionId) {
+  try {
+    const result = await api('/api/billing/confirm', { method: 'POST', body: { sessionId: checkoutSessionId } });
+    await loadWallet();
+    toast(
+      result.duplicate
+        ? 'Payment already applied — your balance is up to date.'
+        : `Payment received. ${fmtNum(result.credited)} deletions added to your balance.`,
+      'success',
+      9000,
+    );
+  } catch (err) {
+    toast(`${err.message} If you were charged, your balance will update within a minute.`, 'error', 12000);
+  }
+  await renderQuotaPanel();
+}
+
 /* ============================================================== X FLOW ==== */
 
 const xMonitor = new JobMonitor('x');
@@ -441,7 +639,9 @@ function renderXConnection() {
     $('#x-avatar').alt = `${conn.username} avatar`;
     $('#x-username').textContent = `@${conn.username}`;
     $('#x-scopes').textContent = `Permissions: ${conn.scopes.join(', ')}`;
-    badge.innerHTML = `<span class="badge good">Connected</span>`;
+    badge.innerHTML = conn.managed
+      ? `<span class="badge info">managed</span><span class="badge good">Connected</span>`
+      : `<span class="badge">your own app</span><span class="badge good">Connected</span>`;
     setStepState('x-step-connect', 'done');
     setStepState('x-step-source', 'active');
   } else {
@@ -460,6 +660,19 @@ function renderXConnection() {
     $('#x-client-id').placeholder = `Saved: ${hint}`;
   }
   $('#x-redirect-uri').value = state.session?.redirectUris?.x ?? '';
+
+  // The instant-connect door only exists if the operator configured both a
+  // shared X app and payments. Otherwise it is bring-your-own-app only.
+  const chooser = $('#x-mode-choices');
+  if (billingAvailable()) {
+    chooser.hidden = false;
+    setXMode(LS.get('xMode', 'managed'));
+  } else {
+    chooser.hidden = true;
+    setXMode('byo');
+    $('#x-mode-managed').hidden = true;
+    $('#x-mode-byo').hidden = false;
+  }
 }
 
 $('#x-app-help-toggle').addEventListener('click', (e) => {
@@ -482,21 +695,41 @@ $$('[data-copy]').forEach((btn) =>
   }),
 );
 
+function setXMode(mode) {
+  state.x.mode = mode;
+  $$('#x-mode-choices .choice').forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.mode === mode)));
+  $('#x-mode-managed').hidden = mode !== 'managed';
+  $('#x-mode-byo').hidden = mode !== 'byo';
+  const btn = $('#x-connect-btn');
+  if (btn) {
+    btn.innerHTML = `${icon('i-link')} ${mode === 'managed' ? 'Connect with X' : 'Connect with my own app'}`;
+  }
+  LS.set('xMode', mode);
+}
+
+$$('#x-mode-choices .choice').forEach((choice) =>
+  choice.addEventListener('click', () => setXMode(choice.dataset.mode)),
+);
+
 $('#x-connect-btn').addEventListener('click', async () => {
+  const managedAvailable = billingAvailable();
+  const mode = managedAvailable ? state.x.mode : 'byo';
   const clientId = $('#x-client-id').value.trim();
   const clientSecret = $('#x-client-secret').value.trim();
   const btn = $('#x-connect-btn');
   btn.disabled = true;
 
   try {
-    if (clientId) {
-      await api('/api/x/app', { method: 'POST', body: { clientId, clientSecret } });
-    } else if (!state.session?.capabilities?.xUserApp && !state.session?.capabilities?.xSharedApp) {
-      toast('Enter your X app Client ID first — the walkthrough above shows where to find it.', 'error');
-      btn.disabled = false;
-      return;
+    if (mode === 'byo') {
+      if (clientId) {
+        await api('/api/x/app', { method: 'POST', body: { clientId, clientSecret } });
+      } else if (!state.session?.capabilities?.xUserApp) {
+        toast('Enter your X app Client ID first — the walkthrough above shows where to find it.', 'error');
+        btn.disabled = false;
+        return;
+      }
     }
-    location.href = '/auth/x/start';
+    location.href = `/auth/x/start?mode=${mode}`;
   } catch (err) {
     toast(err.message, 'error');
     btn.disabled = false;
@@ -650,6 +883,7 @@ function applyXFilters() {
   renderXPreview();
   updateEstimate();
   updateXStepGate();
+  renderQuotaPanel();
 }
 
 function renderXPreview() {
@@ -724,7 +958,28 @@ async function updateEstimate() {
     });
     $('#est-rate').innerHTML = `${est.perWindow}<span class="small faint"> /${Math.round(est.windowMs / 60000)}m</span>`;
     $('#est-time').textContent = dryRun ? 'minutes' : fmtDuration(est.durationMs);
-    $('#est-cost').textContent = dryRun ? '$0' : fmtMoney(est.costEstimateUsd);
+
+    // The cost stat means different things in the two modes, and showing our
+    // wholesale cost next to the user's price would be nonsense. In managed
+    // mode this is what *they* pay; in BYO it's what X will bill them.
+    const costLabel = $('#est-cost')?.closest('.stat')?.querySelector('.k');
+    if (dryRun) {
+      if (costLabel) costLabel.textContent = 'Cost';
+      $('#est-cost').textContent = '$0';
+    } else if (isManagedConnection()) {
+      const balance = state.billing.wallet?.balance ?? 0;
+      const shortfall = Math.max(0, count - balance);
+      if (costLabel) costLabel.textContent = 'Your price';
+      if (!shortfall) {
+        $('#est-cost').textContent = 'Covered';
+      } else {
+        const q = (await api('/api/billing/quote', { method: 'POST', body: { count: shortfall } })).quote;
+        $('#est-cost').textContent = fmtMoney(q.priceCents / 100);
+      }
+    } else {
+      if (costLabel) costLabel.textContent = 'Your X API cost';
+      $('#est-cost').textContent = fmtMoney(est.costEstimateUsd);
+    }
   } catch {
     /* estimate is decoration; never block on it */
   }
@@ -749,7 +1004,7 @@ function updateXStepGate() {
   $('#x-start').disabled = !ready;
 }
 
-$('#x-dry-run').addEventListener('change', () => { updateXStepGate(); updateEstimate(); });
+$('#x-dry-run').addEventListener('change', () => { updateXStepGate(); updateEstimate(); renderQuotaPanel(); });
 $('#x-api-target').addEventListener('change', () => { updateEstimate(); updateXStepGate(); });
 $('#x-api-max').addEventListener('input', debounce(updateEstimate, 300));
 $('#x-archive-target').addEventListener('change', () => {
@@ -801,6 +1056,9 @@ $('#x-start').addEventListener('click', async () => {
         dryRun,
         filters: state.x.filters ?? readFilters(),
         items: first,
+        // Items upload in chunks after this call, so the server needs the full
+        // size up front to reserve the right amount of quota.
+        expectedTotal: isArchive ? state.x.filtered.length : 0,
         maxItems: isArchive ? 0 : Number($('#x-api-max').value) || 0,
         label: isArchive ? `Archive · ${kind}` : `API scan · ${kind}`,
       },
@@ -823,12 +1081,33 @@ $('#x-start').addEventListener('click', async () => {
     xMonitor.attach(job.id);
     toast(dryRun ? 'Dry run started.' : 'Deletion job started. You can close this tab.', 'success', 7000);
   } catch (err) {
-    toast(err.message, 'error', 9000);
+    if (err.code === 'insufficient_quota') {
+      // Not an error so much as a checkout prompt.
+      await loadWallet();
+      await renderQuotaPanel();
+      const q = err.details?.quote;
+      const proceed = await modal.open({
+        title: 'You need more deletions first',
+        sub: q
+          ? `This job needs ${fmtNum(err.details.needed)}. The ${q.tierLabel} pack covers ${fmtNum(q.quota)} for ${fmtMoney(q.priceCents / 100)}.`
+          : 'Top up your balance to run this job.',
+        body: `<div class="notice info">${icon('i-info', 17)}<div>
+            X bills us for every post we delete on your behalf. You are charged once, for the exact number you selected —
+            and anything you do not use stays in your balance.
+          </div></div>`,
+        confirmLabel: q ? `Buy ${fmtNum(q.quota)} — ${fmtMoney(q.priceCents / 100)}` : 'Buy deletions',
+        danger: false,
+      });
+      if (proceed) await startCheckout(err.details?.shortfall ?? neededForCurrentJob());
+    } else {
+      toast(err.message, 'error', 9000);
+    }
   } finally {
     // Restore the label element *before* gating — updateXStepGate() writes into it.
     btn.innerHTML = `${icon('i-play')} <span id="x-start-label"></span>`;
     btn.disabled = false;
     updateXStepGate();
+    renderQuotaPanel();
   }
 });
 
@@ -1231,6 +1510,8 @@ async function loadSession() {
   renderThreads();
   renderFacebook();
 
+  if (state.session.connections?.x) await loadWallet();
+
   const limit = state.session.limits?.xDeletePer15Min ?? 50;
   $('#x-limit-chip').textContent = `${limit} deletes / 15 min`;
   const readPrice = state.session.pricing?.postReadUsd ?? 0.005;
@@ -1248,13 +1529,33 @@ function consumeHash() {
 
   const provider = params.get('provider');
   if (auth === 'connected') {
-    toast(`Connected${params.get('username') ? ` as @${params.get('username')}` : ''}.`, 'success');
+    const mode = params.get('mode');
+    toast(
+      `Connected${params.get('username') ? ` as @${params.get('username')}` : ''}${mode === 'managed' ? ' — nothing else to set up.' : '.'}`,
+      'success',
+    );
     if (provider === 'threads') showView('threads');
     else if (provider === 'facebook') showView('facebook');
   } else if (auth === 'error') {
     toast(params.get('message') || 'Sign-in failed.', 'error', 11000);
   }
   history.replaceState(null, '', location.pathname + location.search);
+}
+
+/** Stripe sends the browser back to `#billing=success&session_id=cs_…`. */
+function consumeBillingHash() {
+  if (!location.hash || location.hash.length < 2) return null;
+  const params = new URLSearchParams(location.hash.slice(1));
+  const billing = params.get('billing');
+  if (!billing) return null;
+  const sessionId = params.get('session_id');
+  history.replaceState(null, '', location.pathname + location.search);
+
+  if (billing === 'cancelled') {
+    toast('Checkout cancelled — nothing was charged.', 'info');
+    return null;
+  }
+  return billing === 'success' && sessionId ? sessionId : null;
 }
 
 async function resumeJobs() {
@@ -1278,13 +1579,21 @@ async function resumeJobs() {
 
 (async function boot() {
   showView(LS.get('view', 'x'));
-  // Read the OAuth result out of the URL first so the session we then load
-  // already reflects the connection that was just made.
+  // Read the OAuth / billing result out of the URL first so the session we then
+  // load already reflects whatever just happened.
   consumeHash();
+  const paidSessionId = consumeBillingHash();
+
   try {
     await loadSession();
   } catch (err) {
     toast(err.message, 'error', 12000);
   }
+
+  await Promise.all([loadPricing(), loadWallet()]);
+  renderPricingTable();
+  if (paidSessionId) await confirmPurchase(paidSessionId);
+  await renderQuotaPanel();
+
   await resumeJobs();
 })();

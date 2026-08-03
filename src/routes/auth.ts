@@ -78,17 +78,45 @@ export async function saveXApp(request: Request, env: Env, session: SessionConte
   });
 }
 
-async function resolveXClient(env: Env, session: SessionContext): Promise<SealedClient> {
+/**
+ * Pick which X app this connection runs on.
+ *
+ * `managed` means our app: no developer account for the user, but every delete
+ * lands on our X bill, so those jobs must spend purchased quota.
+ * `byo` means the user's own app: free for us, billed to them by X directly.
+ */
+async function resolveXClient(
+  env: Env,
+  session: SessionContext,
+  mode: 'managed' | 'byo' | 'auto',
+): Promise<{ client: SealedClient; managed: boolean }> {
   const sealed = session.data.preferences?.xClient as string | undefined;
-  if (sealed) return unseal<SealedClient>(sealed, env.TOKEN_ENCRYPTION_KEY);
-  if (env.X_CLIENT_ID) return { clientId: env.X_CLIENT_ID, clientSecret: env.X_CLIENT_SECRET };
+
+  if (mode === 'managed') {
+    if (!env.X_CLIENT_ID) {
+      throw badRequest('The instant-connect option is not available on this deployment. Use your own X app instead.');
+    }
+    return { client: { clientId: env.X_CLIENT_ID, clientSecret: env.X_CLIENT_SECRET }, managed: true };
+  }
+
+  if (sealed) return { client: await unseal<SealedClient>(sealed, env.TOKEN_ENCRYPTION_KEY), managed: false };
+
+  if (mode === 'byo') {
+    throw badRequest('Add your own X app Client ID first — the walkthrough shows where to find it.');
+  }
+  // auto: fall back to the shared app when the user hasn't brought one.
+  if (env.X_CLIENT_ID) {
+    return { client: { clientId: env.X_CLIENT_ID, clientSecret: env.X_CLIENT_SECRET }, managed: true };
+  }
   throw badRequest(
     'No X app is configured. Add your own X app Client ID in step 1, or ask the operator to set X_CLIENT_ID.',
   );
 }
 
 export async function startX(request: Request, env: Env, session: SessionContext): Promise<Response> {
-  const client = await resolveXClient(env, session);
+  const requested = new URL(request.url).searchParams.get('mode');
+  const mode = requested === 'managed' || requested === 'byo' ? requested : 'auto';
+  const { client, managed } = await resolveXClient(env, session, mode);
   const pkce = await createPkce();
   const state = randomId(18);
   const redirectUri = redirectUriFor(request, env, 'x');
@@ -101,6 +129,7 @@ export async function startX(request: Request, env: Env, session: SessionContext
     sealedClient: await seal(client, env.TOKEN_ENCRYPTION_KEY),
     redirectUri,
     scopes: X.X_SCOPES,
+    managed,
   };
   await session.save();
 
@@ -155,11 +184,17 @@ export async function callbackX(request: Request, env: Env, session: SessionCont
         env.TOKEN_ENCRYPTION_KEY,
       ),
       sealedClient: pending.sealedClient,
+      managed: pending.managed === true,
     };
     session.data.connections.x = connection;
     await session.save();
 
-    return finish(request, env, { auth: 'connected', provider: 'x', username: me.username });
+    return finish(request, env, {
+      auth: 'connected',
+      provider: 'x',
+      username: me.username,
+      mode: connection.managed ? 'managed' : 'byo',
+    });
   } catch (err) {
     const message = err instanceof HttpError ? err.message : 'Could not complete the X sign-in.';
     return finish(request, env, { auth: 'error', provider: 'x', message });
@@ -332,7 +367,9 @@ export async function sessionInfo(request: Request, env: Env, session: SessionCo
       threads: publicConnection(session.data.connections.threads),
     },
     capabilities: {
+      xManagedApp: Boolean(env.X_CLIENT_ID),
       xSharedApp: Boolean(env.X_CLIENT_ID),
+      billing: Boolean(env.STRIPE_SECRET_KEY),
       xUserApp: Boolean(prefs.xClient),
       xClientHint: (prefs.xClientIdHint as string) ?? null,
       facebook: Boolean(env.FACEBOOK_APP_ID && env.FACEBOOK_APP_SECRET),

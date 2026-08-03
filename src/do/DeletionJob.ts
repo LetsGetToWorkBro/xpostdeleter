@@ -30,6 +30,8 @@ import type {
 } from '../types';
 import { compileFilters, matchesFilters, sanitizeItem } from '../lib/filters';
 import { seal, unseal } from '../lib/crypto';
+import { reserveQuota, settleQuota } from './Wallet';
+import { recordShard } from '../lib/appmeter';
 import {
   X_RATE_LIMITS,
   X_PRICING,
@@ -90,6 +92,10 @@ export interface CreateJobInput {
   label?: string;
   maxItems?: number;
   credentials: JobCredentials;
+  /** Set when the job spends purchased quota (managed X app). */
+  metered?: boolean;
+  billingAccountId?: string;
+  allowance?: number;
 }
 
 function chunkKey(n: number) {
@@ -437,8 +443,56 @@ export class DeletionJob implements DurableObject {
   private updateCost(state: JobState): void {
     if (state.kind !== 'x_posts' && state.kind !== 'x_likes') return;
     const reads = state.discovery.reads * X_PRICING.postReadUsd;
-    const writes = state.dryRun ? 0 : (state.deleted + state.failed) * X_PRICING.deleteUsd;
+    // Bill on requests actually issued, not on outcomes — a 404 still cost one.
+    const writes = state.billableRequests * X_PRICING.deleteUsd;
     state.costEstimateUsd = Number((reads + writes).toFixed(4));
+  }
+
+  /**
+   * Tell the wallet what this job actually spent since the last settle, and
+   * hand back whatever was reserved but unused.
+   *
+   * Safe to call more than once: it only ever reports the delta, so a job that
+   * pauses on quota, tops up, resumes and finishes settles exactly twice for
+   * exactly what it used.
+   */
+  private async finalizeBilling(state: JobState): Promise<void> {
+    if (!state.metered || !state.billingAccountId) return;
+    const owed = Math.max(0, state.billableRequests - state.settledRequests);
+    try {
+      await settleQuota(this.env, state.billingAccountId, state.id, owed);
+      state.settledRequests = state.billableRequests;
+    } catch (err) {
+      // Never let a wallet hiccup change the job's outcome. The reservation
+      // stays held and the next terminal transition retries the settle.
+      console.error('wallet settle failed', err instanceof Error ? err.message : err);
+    }
+  }
+
+  /**
+   * Reserve more quota for the work that is left. Used when a metered job is
+   * resumed after running out. Returns how much it managed to get.
+   */
+  private async topUpAllowance(state: JobState): Promise<number> {
+    if (!state.metered || !state.billingAccountId) return 0;
+    const remaining = Math.max(0, state.total - state.cursor);
+    if (!remaining) return 0;
+
+    try {
+      let result = await reserveQuota(this.env, state.billingAccountId, state.id, remaining);
+      // Not enough for the whole tail — take what there is and pause again later.
+      if (!result.ok && result.balance > 0) {
+        result = await reserveQuota(this.env, state.billingAccountId, state.id, result.balance);
+      }
+      if (result.ok) {
+        const got = result.reserved ?? 0;
+        state.allowance += got;
+        return got;
+      }
+    } catch (err) {
+      console.error('wallet reserve failed', err instanceof Error ? err.message : err);
+    }
+    return 0;
   }
 
   private rollWindow(state: JobState, now: number): void {
@@ -464,6 +518,7 @@ export class DeletionJob implements DurableObject {
         if (state.rate.consecutiveErrors >= 12) {
           state.status = 'failed';
           state.finishedAt = Date.now();
+          await this.finalizeBilling(state);
           await this.putState(state);
         } else {
           await this.putState(state);
@@ -547,6 +602,10 @@ export class DeletionJob implements DurableObject {
     let halt: string | null = null;
 
     while (state.cursor < state.total && Date.now() < deadline && !halt) {
+      // Hard stop at the purchased quota. Checked before every batch as well
+      // as before every item, so no path can overspend what was paid for.
+      if (state.allowance > 0 && state.billableRequests >= state.allowance) break;
+
       // Dry runs cost nothing, so they are not rate limited.
       if (!state.dryRun) {
         this.rollWindow(state, Date.now());
@@ -564,10 +623,16 @@ export class DeletionJob implements DurableObject {
       }
 
       for (const item of batch) {
+        if (state.allowance > 0 && state.billableRequests >= state.allowance) break;
+
         if (!state.dryRun) {
           this.rollWindow(state, Date.now());
           if (state.rate.used >= state.rate.limit) break;
           state.rate.used += 1;
+          // X bills per request, so this counts the attempt — a 404 or a
+          // failure still costs us. Incremented before the call, never after,
+          // so a crash mid-flight can't lose a billable unit.
+          state.billableRequests += 1;
         }
 
         const result = await this.deleteOne(state, fresh, item);
@@ -603,6 +668,19 @@ export class DeletionJob implements DurableObject {
           state.failed -= 1;
           state.consecutiveItemFailures = Math.max(0, state.consecutiveItemFailures - 1);
           pending.pop();
+          // A rejected request performs no work, so don't charge for it.
+          state.billableRequests = Math.max(0, state.billableRequests - 1);
+
+          // We were throttled while our own per-user window still had budget.
+          // Per-user limits can't explain that — it points at an app-wide cap,
+          // which is the one thing that would make managed mode unscalable.
+          if (state.rate.used < state.rate.limit) {
+            state.appThrottleEvents += 1;
+            console.warn(
+              `[appmeter] early 429 job=${state.id} kind=${state.kind} usedInWindow=${state.rate.used}/${state.rate.limit} events=${state.appThrottleEvents}`,
+            );
+          }
+
           state.rate.blockedUntil = Math.max(result.resetAt, Date.now() + 30_000);
           break;
         }
@@ -612,6 +690,7 @@ export class DeletionJob implements DurableObject {
           state.cursor -= 1;
           state.failed -= 1;
           pending.pop();
+          state.billableRequests = Math.max(0, state.billableRequests - 1);
           halt = result.error ?? 'The platform rejected this job.';
           break;
         }
@@ -631,6 +710,16 @@ export class DeletionJob implements DurableObject {
     if (didWork) state.rate.consecutiveErrors = 0;
     await this.appendLog(pending);
     this.updateCost(state);
+    // Feeds the app-level-cap measurement. Once per tick, never per delete.
+    if (didWork && !state.dryRun) {
+      await recordShard(this.env.SESSIONS, {
+        jobId: state.id,
+        kind: state.kind,
+        deletes: state.billableRequests,
+        earlyThrottles: state.appThrottleEvents,
+        managed: state.metered,
+      });
+    }
 
     // A halt is recoverable by definition: pause, explain, keep the queue.
     // Resuming picks up at exactly the same item.
@@ -649,6 +738,21 @@ export class DeletionJob implements DurableObject {
     if (state.cursor >= state.total && state.discovery.complete) {
       state.status = 'completed';
       state.finishedAt = Date.now();
+      await this.finalizeBilling(state);
+      await this.putState(state);
+      await this.ctx.storage.deleteAlarm();
+      await this.broadcast();
+      return;
+    }
+
+    // Quota spent with work still queued. Pause rather than fail — topping up
+    // and hitting Resume continues from the exact same item.
+    if (state.allowance > 0 && state.billableRequests >= state.allowance) {
+      const left = Math.max(0, state.total - state.cursor);
+      state.status = 'paused';
+      state.lastError = `Your ${state.allowance.toLocaleString('en-US')} purchased deletions are used up, with ${left.toLocaleString('en-US')} still queued. Top up and press Resume — nothing is lost and nothing was double-charged.`;
+      state.lastErrorAt = Date.now();
+      await this.finalizeBilling(state);
       await this.putState(state);
       await this.ctx.storage.deleteAlarm();
       await this.broadcast();
@@ -763,6 +867,13 @@ export class DeletionJob implements DurableObject {
       rate: { ...rate, windowStart: now, used: 0, consecutiveErrors: 0 },
       consecutiveItemFailures: 0,
       label: input.label,
+      // A dry run costs nothing, so it is never metered even on a managed app.
+      metered: Boolean(input.metered) && !input.dryRun,
+      billingAccountId: input.billingAccountId,
+      allowance: input.dryRun ? 0 : Math.max(0, Math.floor(input.allowance ?? 0)),
+      billableRequests: 0,
+      settledRequests: 0,
+      appThrottleEvents: 0,
     };
     await this.putCredentials(input.credentials);
     await this.putState(state);
@@ -802,6 +913,20 @@ export class DeletionJob implements DurableObject {
         break;
       case 'resume':
         if (state.status === 'paused') {
+          // If we stopped because the quota ran out, try to pick up more before
+          // restarting — otherwise the job would wake up and immediately halt.
+          if (state.metered && state.allowance > 0 && state.billableRequests >= state.allowance) {
+            const got = await this.topUpAllowance(state);
+            if (!got) {
+              state.lastError =
+                'No deletions left in your balance. Buy a top-up, then press Resume again — the queue is exactly where you left it.';
+              state.lastErrorAt = Date.now();
+              await this.putState(state);
+              await this.broadcast();
+              return this.snapshot();
+            }
+            state.lastError = undefined;
+          }
           state.status = state.discovery.complete ? 'running' : 'discovering';
           state.rate.consecutiveErrors = 0;
           state.consecutiveItemFailures = 0;
@@ -813,6 +938,8 @@ export class DeletionJob implements DurableObject {
       case 'cancel':
         state.status = 'cancelled';
         state.finishedAt = Date.now();
+        // Give back everything reserved but not spent, immediately.
+        await this.finalizeBilling(state);
         await this.putState(state);
         await this.ctx.storage.deleteAlarm();
         // The job is over — drop the tokens immediately. The log survives so

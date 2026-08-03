@@ -104,6 +104,7 @@ export function publicConnection(conn: Connection | undefined) {
     scopes: conn.scopes,
     connectedAt: conn.connectedAt,
     expiresAt: conn.expiresAt,
+    managed: conn.managed === true,
     pages: conn.pages?.map((p) => ({ id: p.id, name: p.name, category: p.category ?? null, tasks: p.tasks })) ?? null,
   };
 }

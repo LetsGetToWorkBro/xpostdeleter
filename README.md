@@ -12,8 +12,11 @@ going after you close the tab, reboot your laptop, or lose your connection.
 
 - [What this does — and what it honestly can't](#what-this-does--and-what-it-honestly-cant)
 - [Quick start](#quick-start)
+- [Two ways to connect X](#two-ways-to-connect-x)
 - [Setting up your X developer app](#setting-up-your-x-developer-app)
 - [Rate limits and costs (read this)](#rate-limits-and-costs-read-this)
+- [Pricing the managed tier](#pricing-the-managed-tier)
+- [Stripe setup](#stripe-setup)
 - [The Facebook reality](#the-facebook-reality)
 - [Threads setup](#threads-setup)
 - [Environment variables](#environment-variables)
@@ -89,6 +92,46 @@ Nothing else is mandatory. X works immediately with users bringing their own dev
 Facebook and Threads light up once you add their app credentials.
 
 ---
+
+## Two ways to connect X
+
+The single most important fact about this product: **X's 50-deletes-per-15-minutes
+limit is scoped to the authenticating _user_, not the app.** Running deletions on
+our own developer app buys exactly zero extra throughput. Every account is capped
+at 200/hour no matter whose credentials are used.
+
+So the choice between the two doors is about *setup friction and who pays X*,
+never about speed:
+
+| | **Instant (managed)** | **Bring your own app** |
+|---|---|---|
+| Setup | Click connect. Nothing else. | ~3 minutes in the X developer portal |
+| Who pays X | We do | You do, directly |
+| What you pay us | Per post deleted, quoted up front | Nothing |
+| Speed | Identical | Identical |
+| Dry runs | Free | Free |
+
+Note that bring-your-own is no longer *free* in absolute terms either — X retired
+its standalone free tier in February 2026, so a BYO user buys credits from X. The
+honest framing is **at cost with no markup (BYO)** versus **we handle everything
+(managed)**.
+
+Managed mode only appears if the operator has configured both `X_CLIENT_ID` and
+`STRIPE_SECRET_KEY`. Otherwise the app is bring-your-own-app only, and says so.
+
+### Trying to beat the rate limit
+
+Don't. Rotating several apps to multiply one user's budget is prohibited twice
+over by the [X Developer Policy](https://docs.x.com/developer-terms/policy) — you
+may not "exceed or circumvent rate limits", and you may not "register multiple
+applications for a single use case, or substantially similar or overlapping use
+cases". The penalty is losing the app and the users' accounts. The only
+legitimate lever is an Enterprise agreement, which is not a realistic path for
+this use case.
+
+PostCleaner treats the limit as a fixed constraint and engineers around the
+*consequence* instead: a job that survives four days of waiting. That is the
+actual moat — a browser extension needs the tab open.
 
 ## Setting up your X developer app
 
@@ -203,6 +246,76 @@ a temporary lock or a challenge. To stay on the right side of it:
 
 ---
 
+## Pricing the managed tier
+
+Managed mode costs us real money per delete, and that cost is **unbounded per
+user** — a 40,000-post history is a 40,000-unit bill. A flat subscription is
+therefore upside-down for exactly the people who most want the tool. Pricing is
+per-post, one-time, and quoted before anything runs.
+
+| Pack | Deletions | Price | Our cost @ $0.01 | Margin |
+|---|---|---|---|---|
+| Starter | 1,000 | $19 | $10 | 47% |
+| Standard | 3,000 | $49 | $30 | 39% |
+| Deep clean | 8,000 | $99 | $80 | 19% |
+| Metered | beyond 8,000 | $0.02/post | $0.01/post | 50% |
+
+Tiers live in `PRICE_TIERS` in `src/lib/billing.ts`. Margins are computed from
+`X_DELETE_UNIT_COST_USD` — change that one var and every figure recalculates.
+
+**The unfair advantage:** because the archive is parsed in the browser, we know
+the exact post count for **$0** before making a single API call. The user sees
+"12,480 posts — $X" up front. No competitor can quote that cleanly, and the app
+says plainly *why* it costs what it does.
+
+### How quota is enforced
+
+Money code, so the accounting is deliberately conservative:
+
+- Quota lives in a **`Wallet` Durable Object keyed by X account id**, not KV.
+  KV is eventually consistent and two concurrent jobs could both "afford" the
+  same balance.
+- **Reserve up front, settle at the end.** Creating a job deducts the full
+  amount; the job cannot spend past its reservation no matter how long it runs
+  or how many times it restarts; finishing or cancelling returns the unused
+  remainder immediately.
+- **Attempts are billed, not successes** — a 404 still costs X a request. A
+  *rejected* request (429, 401, 403) performs no work and is not charged.
+- **Dry runs are always free**, even on a managed connection.
+- Purchases are **idempotent on the Stripe session id**, so the browser's return
+  from checkout and the webhook can both credit without double-crediting.
+- Running out mid-job **pauses** rather than fails. Top up, press Resume, and it
+  continues from the exact same item.
+- Quota follows the **X account**, not the cookie, so clearing cookies doesn't
+  strand a purchase.
+
+## Stripe setup
+
+Only needed for managed mode. Everything else works without it.
+
+1. Get your secret key from the Stripe dashboard (`sk_live_…` or `sk_test_…`).
+2. Add a webhook endpoint pointing at `https://<your-worker>/api/billing/webhook`,
+   subscribed to `checkout.session.completed` and
+   `checkout.session.async_payment_succeeded`. Copy the signing secret (`whsec_…`).
+3. Set the secrets:
+
+   ```bash
+   npx wrangler secret put STRIPE_SECRET_KEY
+   npx wrangler secret put STRIPE_WEBHOOK_SECRET
+   npx wrangler secret put ADMIN_TOKEN        # guards /api/admin/*
+   ```
+
+No products or prices need to exist in your Stripe catalog — checkout sessions
+are created with inline `price_data`, so the tier table in code is the single
+source of truth.
+
+Webhook signatures are verified against the **raw** request body with
+HMAC-SHA-256 and a 5-minute replay window, and that route is deliberately
+excluded from session and same-origin handling.
+
+To exercise the whole billing path locally without touching Stripe, set
+`STRIPE_API_BASE` to a stub or [`stripe-mock`](https://github.com/stripe/stripe-mock).
+
 ## The Facebook reality
 
 **There is no supported way to delete personal-timeline posts through an API.** Not with
@@ -303,6 +416,9 @@ stop with a "credentials unavailable" message.
 | `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET` | The Facebook Pages flow |
 | `THREADS_APP_ID`, `THREADS_APP_SECRET` | The Threads flow |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Job history that outlives the 30-day session |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | The paid managed X tier |
+| `ADMIN_TOKEN` | `/api/admin/appmeter` and `/api/admin/grant` |
+| `STRIPE_API_BASE` | Point Stripe calls at a stub for testing |
 
 ### Vars (in `wrangler.toml`, not secrets)
 
@@ -310,6 +426,7 @@ stop with a "credentials unavailable" message.
 |---|---|---|
 | `APP_NAME` | `PostCleaner` | Shown in `/api/health` |
 | `PUBLIC_BASE_URL` | *(empty)* | Force the origin used to build OAuth redirect URIs |
+| `X_DELETE_UNIT_COST_USD` | `0.01` | What X charges us per delete. **Measure it** — see [docs/CALIBRATION.md](docs/CALIBRATION.md). Drives every price and margin. |
 
 ### Supabase is genuinely optional
 
@@ -362,6 +479,8 @@ src/
     session.ts              Cookie sessions in KV, job ownership index
     http.ts                 JSON/error helpers, cookies, security headers
     filters.ts              Filter compilation — the server-side safety boundary
+    billing.ts              Price tiers + dependency-free Stripe client
+    appmeter.ts             App-wide throughput measurement (per-app cap probe)
     supabase.ts             Optional mirror (fire-and-forget)
   providers/
     x.ts                    X API v2 client, rate + pricing constants
@@ -369,12 +488,19 @@ src/
   routes/
     auth.ts                 OAuth for all three providers
     jobs.ts                 Job CRUD, control, CSV/JSON log export, estimator
+    billing.ts              Quote, checkout, webhook, wallet, operator grants
+    calibration.ts          The two measurements (see docs/CALIBRATION.md)
   do/
     DeletionJob.ts          The engine
+    Wallet.ts               Atomic purchased-quota ledger, one per X account
 public/
   index.html  styles.css  app.js  archive.js  favicon.svg
 supabase/
   schema.sql                Optional, and it says so at the top
+docs/
+  CALIBRATION.md            How to measure the two open unknowns
+scripts/
+  calibrate.mjs             Runs the per-delete cost experiment
 ```
 
 ---

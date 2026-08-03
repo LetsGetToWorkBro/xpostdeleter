@@ -95,11 +95,45 @@
             </div>
 
             <div id="x-disconnected">
+              <div class="choices" id="x-mode-choices" hidden>
+                <button class="choice" data-mode="managed" aria-pressed="true">
+                  <span class="ico"><svg width="17" height="17"><use href="#i-play"/></svg></span>
+                  <span>
+                    <strong>Connect instantly</strong>
+                    <span>No developer account, nothing to set up. You pay per post deleted — the exact price is shown before anything runs.</span>
+                  </span>
+                  <span class="badge good">Easiest</span>
+                </button>
+                <button class="choice" data-mode="byo" aria-pressed="false">
+                  <span class="ico"><svg width="17" height="17"><use href="#i-shield"/></svg></span>
+                  <span>
+                    <strong>Use my own X app</strong>
+                    <span>Free for us, so we charge nothing. Takes about three minutes to set up, and X bills you directly at cost.</span>
+                  </span>
+                  <span class="badge">At cost</span>
+                </button>
+              </div>
+
+              <div id="x-mode-managed" hidden>
+                <div class="notice info" style="margin-top:14px">
+                  <svg><use href="#i-info"/></svg>
+                  <div id="x-managed-pitch">
+                    <strong>Why this costs money.</strong> X charges us for every post we delete on your behalf, and since
+                    February 2026 there is no free tier to fall back on. You pay once, per post, with the exact count taken
+                    from your archive before anything is deleted. Unused deletions stay in your balance.
+                  </div>
+                </div>
+                <div id="x-pricing-table" style="margin-top:14px"></div>
+              </div>
+
+              <div id="x-mode-byo">
               <div class="notice info">
                 <svg><use href="#i-info"/></svg>
                 <div>
                   <strong>Bring your own X app.</strong> X requires each tool to use a developer app. Creating one takes about
                   three minutes and keeps your rate limits and any usage costs entirely under your own account.
+                  Note that X retired its free tier in February 2026, so you will buy credits from X directly — at cost, with no
+                  markup from us.
                   <a href="#" id="x-app-help-toggle">Show me how →</a>
                 </div>
               </div>
@@ -140,6 +174,7 @@
                 </div>
               </div>
               <p class="tiny faint" style="margin-top:8px">Stored encrypted (AES-256-GCM) against your session only, and dropped when you disconnect.</p>
+              </div>
             </div>
           </div>
           <div class="card-foot" id="x-connect-foot">
@@ -326,8 +361,10 @@
               <div class="stat"><div class="k">Selected</div><div class="v" id="est-count">0</div></div>
               <div class="stat muted"><div class="k">Rate limit</div><div class="v" id="est-rate">50<span class="small faint"> /15m</span></div></div>
               <div class="stat muted"><div class="k">Est. duration</div><div class="v" id="est-time">—</div></div>
-              <div class="stat muted"><div class="k">Est. API cost</div><div class="v" id="est-cost">$0</div></div>
+              <div class="stat muted"><div class="k">Cost</div><div class="v" id="est-cost">$0</div></div>
             </div>
+
+            <div id="x-quota-panel" hidden></div>
 
             <div class="notice warn">
               <svg><use href="#i-warn"/></svg>
@@ -368,6 +405,7 @@
               <div class="stat bad"><div class="k">Failed</div><div class="v" id="x-v-failed">0</div></div>
               <div class="stat muted"><div class="k">Finishes</div><div class="v" id="x-v-eta" style="font-size:1rem">—</div></div>
             </div>
+            <div id="x-job-quota"></div>
             <div id="x-job-error"></div>
             <details id="x-job-log-wrap">
               <summary class="small muted" style="cursor:pointer">Recent activity</summary>

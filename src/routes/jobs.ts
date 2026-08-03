@@ -12,6 +12,8 @@ import { indexJob, listJobs, ownsJob, type SessionContext } from '../lib/session
 import { sanitizeFilters } from '../lib/filters';
 import { mirrorJob, supabaseEnabled } from '../lib/supabase';
 import { X_PRICING, X_RATE_LIMITS } from '../providers/x';
+import { reserveQuota } from '../do/Wallet';
+import { quoteFor } from '../lib/billing';
 import { FB_PAGE_RATE_LIMIT, THREADS_RATE_LIMIT } from '../providers/meta';
 
 const KINDS: JobKind[] = [
@@ -136,6 +138,8 @@ interface CreateBody {
   pageId?: string;
   maxItems?: number;
   label?: string;
+  /** Full archive size, declared up front so quota can be reserved for it. */
+  expectedTotal?: number;
 }
 
 export async function createJob(request: Request, env: Env, session: SessionContext): Promise<Response> {
@@ -157,6 +161,43 @@ export async function createJob(request: Request, env: Env, session: SessionCont
   const jobId = randomId(12);
   const label =
     typeof body.label === 'string' && body.label.trim() ? body.label.trim().slice(0, 80) : undefined;
+  const maxItems = typeof body.maxItems === 'number' && body.maxItems > 0 ? Math.floor(body.maxItems) : 0;
+
+  /* ------------------------------ metering ------------------------------ */
+  // Only X jobs on *our* app cost us money. Bring-your-own-app users pay X
+  // directly, and dry runs make no delete calls at all — both run unmetered.
+  const xConn = session.data.connections.x;
+  const metered = !dryRun && (kind === 'x_posts' || kind === 'x_likes') && Boolean(xConn?.managed);
+
+  let allowance = 0;
+  if (metered && xConn) {
+    // We must know the size up front to reserve against it. The archive gives
+    // an exact count for free; an API scan has to be explicitly capped.
+    //
+    // `expectedTotal` is the client's declared archive size — items arrive in
+    // chunks after this call, so `body.items` is only the first page. It does
+    // not need to be trusted: the reservation caps what the job may ever spend,
+    // so understating it just means the job pauses early and asks for a top-up.
+    const declared = Math.max(0, Math.floor(Number(body.expectedTotal) || 0));
+    const needed = source === 'archive' ? declared || (body.items?.length ?? 0) : maxItems;
+    if (!needed) {
+      throw badRequest(
+        'Set a maximum number of posts before starting a managed scan — we reserve that many deletions from your balance up front so a job can never spend more than you paid for.',
+      );
+    }
+
+    const reservation = await reserveQuota(env, xConn.accountId, jobId, needed);
+    if (!reservation.ok) {
+      const quote = quoteFor(Math.max(0, reservation.shortfall ?? needed), env);
+      throw new HttpError(402, 'insufficient_quota', 'You do not have enough deletions left for this job.', {
+        needed,
+        balance: reservation.balance,
+        shortfall: reservation.shortfall ?? needed,
+        quote,
+      });
+    }
+    allowance = reservation.reserved ?? needed;
+  }
 
   const snapshot = await callDo<JobSnapshot>(env, jobId, '/create', {
     jobId,
@@ -166,8 +207,11 @@ export async function createJob(request: Request, env: Env, session: SessionCont
     dryRun,
     filters,
     label,
-    maxItems: typeof body.maxItems === 'number' && body.maxItems > 0 ? Math.floor(body.maxItems) : 0,
+    maxItems,
     credentials,
+    metered,
+    billingAccountId: metered ? xConn!.accountId : undefined,
+    allowance,
   });
 
   let final = snapshot;
