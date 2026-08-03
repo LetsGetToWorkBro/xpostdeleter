@@ -82,6 +82,10 @@ openssl rand -base64 32 | npx wrangler secret put TOKEN_ENCRYPTION_KEY
 `scripts/deploy.sh` is idempotent — re-run it any time. It only generates the
 two required secrets on first run and never prints them.
 
+**No terminal?** See **[docs/DEPLOY-FROM-PHONE.md](docs/DEPLOY-FROM-PHONE.md)** —
+deploy entirely from a phone browser, either through Cloudflare Workers Builds
+(no API token needed at all) or the GitHub Actions workflow in this repo.
+
 ### Cloudflare API token permissions
 
 `wrangler whoami` succeeds on a read-only token, so it is not proof you can
@@ -520,8 +524,12 @@ supabase/
   schema.sql                Optional, and it says so at the top
 docs/
   CALIBRATION.md            How to measure the two open unknowns
+  DEPLOY-FROM-PHONE.md      Deploying with no terminal
 scripts/
   calibrate.mjs             Runs the per-delete cost experiment
+  deploy.sh                 Idempotent deploy + first-run secret generation
+.github/workflows/
+  deploy.yml                Push-to-main / one-tap deploy
 ```
 
 ---
