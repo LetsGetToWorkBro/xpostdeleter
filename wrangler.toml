@@ -20,8 +20,8 @@ run_worker_first = ["/api/*", "/auth/*"]
 # ---------------------------------------------------------------------------
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_YOUR_PREVIEW_KV_NAMESPACE_ID"
+id = "330de6ba50f94f9d9a258e8d44d665fd"
+preview_id = "6a0ced124d2647babd20aee281cd1d1f"
 
 # ---------------------------------------------------------------------------
 # One Durable Object per deletion job. Holds the queue, the rate-limit window,

@@ -76,8 +76,29 @@ openssl rand -hex 32    | npx wrangler secret put SESSION_SECRET
 openssl rand -base64 32 | npx wrangler secret put TOKEN_ENCRYPTION_KEY
 
 # 3. Ship it
-npx wrangler deploy
+./scripts/deploy.sh          # generates + sets the secrets, then deploys
 ```
+
+`scripts/deploy.sh` is idempotent — re-run it any time. It only generates the
+two required secrets on first run and never prints them.
+
+### Cloudflare API token permissions
+
+`wrangler whoami` succeeds on a read-only token, so it is not proof you can
+deploy. The token needs:
+
+| Scope | Level | Why |
+|---|---|---|
+| Account → Workers Scripts | **Edit** | Deploy the Worker, its Durable Objects and secrets |
+| Account → Workers KV Storage | **Edit** | Create and bind the SESSIONS namespace |
+| Account → Account Settings | Read | Account resolution |
+| User → Memberships | Read | Optional — silences a wrangler warning |
+
+Create one at **dash.cloudflare.com → My Profile → API Tokens → Create Token**.
+The "Edit Cloudflare Workers" template covers the first two.
+
+A token missing these fails with `Authentication error [code: 10000]` on deploy
+while `whoami` still works, which is a confusing pair of symptoms.
 
 `wrangler deploy` prints your URL, e.g. `https://postcleaner.<subdomain>.workers.dev`.
 
