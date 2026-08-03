@@ -1,0 +1,20 @@
+{
+  "name": "postcleaner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PostCleaner — safely mass-delete your own posts on X (Twitter), Threads and Facebook Pages. Runs entirely on Cloudflare Workers + Durable Objects.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "tail": "wrangler tail",
+    "kv:create": "wrangler kv namespace create SESSIONS",
+    "secrets": "node scripts/print-secrets.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260730.1",
+    "typescript": "^5.6.3",
+    "wrangler": "^4.33.0"
+  }
+}

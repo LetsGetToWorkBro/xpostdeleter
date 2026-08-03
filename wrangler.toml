@@ -1,0 +1,70 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "postcleaner"
+main = "src/index.ts"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# ---------------------------------------------------------------------------
+# Static SPA. Files in ./public are served straight from Cloudflare's edge.
+# Anything that is not a real file falls through to the Worker, and /api/* +
+# /auth/* always hit the Worker first.
+# ---------------------------------------------------------------------------
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*", "/auth/*"]
+
+# ---------------------------------------------------------------------------
+# Sessions + job index. Create with:  npx wrangler kv namespace create SESSIONS
+# then paste the returned id below.
+# ---------------------------------------------------------------------------
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_YOUR_PREVIEW_KV_NAMESPACE_ID"
+
+# ---------------------------------------------------------------------------
+# One Durable Object per deletion job. Holds the queue, the rate-limit window,
+# the encrypted tokens and the audit log. Alarms drive the job for hours/days
+# even when nobody has the tab open.
+# ---------------------------------------------------------------------------
+[[durable_objects.bindings]]
+name = "DELETION_JOB"
+class_name = "DeletionJob"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DeletionJob"]
+
+[vars]
+APP_NAME = "PostCleaner"
+# Set this to your deployed origin, e.g. "https://postcleaner.example.workers.dev".
+# Leave empty to derive the origin from the incoming request (fine for most setups,
+# but an explicit value is safer when you sit behind a proxy).
+PUBLIC_BASE_URL = ""
+
+# ---------------------------------------------------------------------------
+# Secrets (never put these in this file) — set with `wrangler secret put NAME`:
+#
+#   SESSION_SECRET            required  random 32+ chars, signs session cookies
+#   TOKEN_ENCRYPTION_KEY      required  base64 of 32 random bytes, AES-GCM key
+#                                       for tokens at rest
+#   FACEBOOK_APP_ID           optional  enables the Facebook Pages flow
+#   FACEBOOK_APP_SECRET       optional
+#   THREADS_APP_ID            optional  enables the Threads flow
+#   THREADS_APP_SECRET        optional
+#   X_CLIENT_ID               optional  a shared X app; users can instead bring
+#   X_CLIENT_SECRET           optional  their own client id/secret in the UI
+#   SUPABASE_URL              optional  job history mirror
+#   SUPABASE_SERVICE_ROLE_KEY optional
+#
+# Generate the two required ones:
+#   openssl rand -base64 32   # TOKEN_ENCRYPTION_KEY
+#   openssl rand -hex 32      # SESSION_SECRET
+# ---------------------------------------------------------------------------
+
+[observability]
+enabled = true
+
+[placement]
+mode = "smart"
