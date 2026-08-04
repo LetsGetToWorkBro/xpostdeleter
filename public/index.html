@@ -1,48 +1,47 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>PostCleaner — delete your old posts, safely</title>
-<meta name="description" content="Bulk-delete your own posts on X, Threads and Facebook Pages using official APIs only. Resumable, rate-limit aware, and your data never leaves your browser." />
-<meta name="color-scheme" content="dark light" />
-<meta name="theme-color" content="#08090b" />
+<title>Delete Your Old Posts on X, Threads and Facebook — POSTCLEANER.1999</title>
+<meta name="description" content="Bulk-delete your own posts on X, Threads and Facebook Pages. Official APIs only, no password, nothing scraped. The archive is read in your browser and never uploaded." />
+<link rel="canonical" href="https://delete.1999loc.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Delete Your Old Posts on X, Threads and Facebook — POSTCLEANER.1999" />
+<meta property="og:description" content="Bulk-delete your own posts using official APIs only. No password, nothing scraped, archive parsed in your browser." />
+<meta property="og:url" content="https://delete.1999loc.com/" />
+<meta property="og:site_name" content="POSTCLEANER.1999" />
+<meta name="twitter:card" content="summary" />
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-  <symbol id="i-broom" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 5 12.5 11.5"/><path d="M9 22c-3 0-5-2-5-5 0-1.5.6-2.4 1.4-3.2L9 10.2l4.8 4.8-3.6 3.6C9.4 19.4 9 20.5 9 22Z"/><path d="M13 22h6"/></symbol>
-  <symbol id="i-x" viewBox="0 0 24 24" fill="currentColor"><path d="M17.53 3H20.5l-6.49 7.42L21.75 21h-5.98l-4.68-6.12L5.7 21H2.73l6.94-7.93L2.5 3h6.13l4.23 5.59L17.53 3Zm-1.04 16.2h1.64L7.6 4.71H5.84L16.49 19.2Z"/></symbol>
-  <symbol id="i-threads" viewBox="0 0 24 24" fill="currentColor"><path d="M16.2 11.2c-.1-.05-.2-.1-.3-.14-.18-3.3-1.98-5.19-5-5.21h-.04c-1.8 0-3.3.77-4.22 2.17l1.66 1.14c.69-1.05 1.77-1.27 2.56-1.27h.03c.98 0 1.72.29 2.2.85.35.4.58.97.7 1.68a12.6 12.6 0 0 0-2.83-.14c-2.85.17-4.68 1.83-4.56 4.14.06 1.17.65 2.18 1.65 2.84.85.56 1.94.83 3.07.77 1.5-.08 2.67-.65 3.49-1.69.62-.79 1.02-1.81 1.19-3.1.72.43 1.25 1 1.54 1.68.5 1.16.53 3.07-1.02 4.62-1.37 1.36-3.01 1.95-5.5 1.97-2.76-.02-4.85-.9-6.2-2.62C3.4 16.98 2.75 14.7 2.72 12c.03-2.7.68-4.98 1.9-6.52C5.98 3.77 8.07 2.89 10.83 2.87c2.78.02 4.9.9 6.32 2.62.7.85 1.22 1.91 1.57 3.15l1.95-.52c-.42-1.52-1.08-2.84-1.98-3.93C16.87 1.97 14.24.85 10.84.83h-.01C7.44.85 4.84 1.98 3.1 4.19 1.56 6.16.76 8.9.73 12v.01c.03 3.09.83 5.83 2.37 7.8 1.74 2.21 4.34 3.34 7.73 3.36h.01c3.02-.02 5.14-.81 6.9-2.55 2.29-2.29 2.22-5.15 1.47-6.91-.55-1.27-1.58-2.3-3.01-3.01Zm-5.1 5.85c-1.25.07-2.55-.49-2.61-1.66-.05-.87.62-1.84 2.69-1.96.24-.01.47-.02.7-.02.75 0 1.45.07 2.09.21-.24 2.98-1.64 3.37-2.87 3.43Z"/></symbol>
-  <symbol id="i-facebook" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5.02 3.66 9.18 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.52 1.49-3.92 3.77-3.92 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.78-1.63 1.57v1.89h2.78l-.45 2.91h-2.33V22c4.78-.76 8.44-4.92 8.44-9.94Z"/></symbol>
-  <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v13"/></symbol>
-  <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10Z"/></symbol>
-  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></symbol>
-  <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></symbol>
-  <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
-  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
-  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></symbol>
-  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
-  <symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M9 5v14M15 5v14"/></symbol>
-  <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5Z"/></symbol>
-  <symbol id="i-stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
-  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
-  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
-  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></symbol>
-  <symbol id="i-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7L12.2 19"/></symbol>
-  <symbol id="i-filter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z"/></symbol>
-  <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
-  <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15v3M12 9v9M17 5v13"/></symbol>
-</defs></svg>
+<!--
+  EXPECTED LAYOUT (single column, ~680px, left aligned):
+
+    POSTCLEANER.1999
+    You wrote it. You can unwrite it.
+    ------------------------------------------------------------
+    X | Threads | Facebook | Jobs
+    ------------------------------------------------------------
+    Step 1  Connect your X account
+    Step 2  Where the list comes from
+    Step 3  What goes
+    Step 4  Check it, then run it
+    ------------------------------------------------------------
+    Official APIs only - Not affiliated with X or Meta - ...
+
+  The class names below are a contract with app.js, which queries and
+  regenerates this markup. Rename one and something silently stops working.
+  Restyle in styles.css instead.
+-->
 
 <div class="shell">
   <header class="topbar">
     <div class="brand">
-      <span class="mark"><svg width="17" height="17"><use href="#i-broom"/></svg></span>
-      <span>PostCleaner<small>Delete your history, on your terms</small></span>
+      <h1>POSTCLEANER.1999</h1>
+      <p class="tagline">You wrote it. You can unwrite it.</p>
     </div>
     <nav class="tabs" role="tablist" aria-label="Platforms">
       <button class="tab" role="tab" data-view="x" aria-selected="true">X</button>
@@ -50,9 +49,7 @@
       <button class="tab" role="tab" data-view="facebook" aria-selected="false">Facebook</button>
       <button class="tab" role="tab" data-view="jobs" aria-selected="false">Jobs</button>
     </nav>
-    <button class="icon-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle colour theme">
-      <svg width="16" height="16"><use href="#i-moon"/></svg>
-    </button>
+    <button class="icon-btn" id="theme-toggle" hidden aria-hidden="true" tabindex="-1"></button>
   </header>
 
   <main>
@@ -60,12 +57,17 @@
     <!-- ============================== X ============================== -->
     <section class="view" id="view-x" role="tabpanel">
       <div class="hero">
-        <h1>Delete your X history</h1>
-        <p>Official X API only. Upload your data archive, choose exactly what goes, and let the job run for as long as it needs — even with the tab closed.</p>
+        <h2>Delete your X history</h2>
+        <p>
+          Upload your archive, say exactly what goes, and leave. The job runs on a
+          server, so it keeps going with the tab shut, the laptop closed and you
+          asleep. It has to: X allows fifty deletions every fifteen minutes, and
+          twenty thousand posts is four days of waiting.
+        </p>
         <div class="chips">
-          <span class="chip"><svg><use href="#i-shield"/></svg> Official API v2 + OAuth&nbsp;2.0 PKCE</span>
-          <span class="chip"><svg><use href="#i-clock"/></svg> <span id="x-limit-chip">50 deletes / 15 min</span></span>
-          <span class="chip"><svg><use href="#i-eye"/></svg> Dry run first</span>
+          <span class="chip">Official API, OAuth 2.0, no password</span>
+          <span class="chip"><span id="x-limit-chip">50 deletes / 15 min</span></span>
+          <span class="chip">Dry run first, always</span>
         </div>
       </div>
 
@@ -77,7 +79,7 @@
             <span class="step-num">1</span>
             <div>
               <h2>Connect your X account</h2>
-              <p>PostCleaner never sees your password. You authorise it through X, and you can revoke it at any time.</p>
+              <p>You approve this on x.com. We never see your password, and you can revoke it in two clicks.</p>
             </div>
             <div class="head-aside" id="x-conn-badge"></div>
           </div>
@@ -97,89 +99,97 @@
             <div id="x-disconnected">
               <div class="choices" id="x-mode-choices" hidden>
                 <button class="choice" data-mode="managed" aria-pressed="true">
-                  <span class="ico"><svg width="17" height="17"><use href="#i-play"/></svg></span>
+                  <span class="ico"></span>
                   <span>
                     <strong>Connect instantly</strong>
-                    <span>No developer account, nothing to set up. You pay per post deleted — the exact price is shown before anything runs.</span>
+                    <span>Nothing to set up. You pay per post deleted, and the exact price is on screen before anything runs.</span>
                   </span>
                   <span class="badge good">Easiest</span>
                 </button>
                 <button class="choice" data-mode="byo" aria-pressed="false">
-                  <span class="ico"><svg width="17" height="17"><use href="#i-shield"/></svg></span>
+                  <span class="ico"></span>
                   <span>
                     <strong>Use my own X app</strong>
-                    <span>Free for us, so we charge nothing. Takes about three minutes to set up, and X bills you directly at cost.</span>
+                    <span>Costs us nothing, so we charge nothing. About three minutes of setup, and X bills you directly at cost.</span>
                   </span>
                   <span class="badge">At cost</span>
                 </button>
               </div>
 
               <div id="x-mode-managed" hidden>
-                <div class="notice info" style="margin-top:14px">
-                  <svg><use href="#i-info"/></svg>
+                <div class="notice">
                   <div id="x-managed-pitch">
-                    <strong>Why this costs money.</strong> X charges us for every post we delete on your behalf, and since
-                    February 2026 there is no free tier to fall back on. You pay once, per post, with the exact count taken
-                    from your archive before anything is deleted. Unused deletions stay in your balance.
+                    <strong>Why this costs money.</strong> X charges us for every post we delete
+                    for you, and the free tier ended in February 2026. So you pay once, per post,
+                    at a count taken from your archive before anything is touched. Deletions you
+                    do not use stay in your balance.
                   </div>
                 </div>
-                <div id="x-pricing-table" style="margin-top:14px"></div>
+                <div id="x-pricing-table"></div>
               </div>
 
               <div id="x-mode-byo">
-              <div class="notice info">
-                <svg><use href="#i-info"/></svg>
-                <div>
-                  <strong>Bring your own X app.</strong> X requires each tool to use a developer app. Creating one takes about
-                  three minutes and keeps your rate limits and any usage costs entirely under your own account.
-                  Note that X retired its free tier in February 2026, so you will buy credits from X directly — at cost, with no
-                  markup from us.
-                  <a href="#" id="x-app-help-toggle">Show me how →</a>
+                <div class="notice">
+                  <div>
+                    <strong>Bring your own X app.</strong> X makes every tool use a developer app.
+                    Making one takes about three minutes, and it keeps the rate limits and the
+                    bill on your account instead of ours. The free tier ended in February 2026,
+                    so you will buy credits from X directly — at cost, with nothing added by us.
+                    <a href="#" id="x-app-help-toggle">Show me how &rarr;</a>
+                  </div>
                 </div>
-              </div>
 
-              <div id="x-app-help" hidden style="margin-top:14px">
-                <div class="guide">
-                  <div class="guide-step">
-                    <div><h4>Open the X developer portal</h4><p>Go to <a href="https://developer.x.com/en/portal/dashboard" target="_blank" rel="noopener noreferrer">developer.x.com</a> and sign in with the account you want to clean. Create a project and an app.</p></div>
-                  </div>
-                  <div class="guide-step">
-                    <div><h4>Turn on user authentication</h4><p>In your app: <span class="kbd">User authentication settings</span> → <span class="kbd">Set up</span>. Choose <strong>Read and write</strong> permissions and <strong>Web App / Automated App</strong> as the type.</p></div>
-                  </div>
-                  <div class="guide-step">
-                    <div>
-                      <h4>Paste this exact callback URL</h4>
-                      <p>It must match character for character, or X will reject the sign-in.</p>
-                      <div class="copy-row" style="margin-top:8px">
-                        <input type="text" id="x-redirect-uri" readonly />
-                        <button class="btn btn-sm" data-copy="#x-redirect-uri">Copy</button>
+                <div id="x-app-help" hidden>
+                  <div class="guide">
+                    <div class="guide-step">
+                      <div>
+                        <h4>1. Open the X developer portal</h4>
+                        <p>Go to <a href="https://developer.x.com/en/portal/dashboard" target="_blank" rel="noopener noreferrer">developer.x.com</a> and sign in as the account you want to clean. Create a project, then an app inside it.</p>
                       </div>
-                      <p style="margin-top:6px">Website URL can be anything you own — your own site is fine.</p>
+                    </div>
+                    <div class="guide-step">
+                      <div>
+                        <h4>2. Turn on user authentication</h4>
+                        <p>In the app: <span class="kbd">User authentication settings</span> &rarr; <span class="kbd">Set up</span>. Pick <strong>Read and write</strong>, and type <strong>Web App / Automated App</strong>. Read-only will connect fine and then fail at the first delete.</p>
+                      </div>
+                    </div>
+                    <div class="guide-step">
+                      <div>
+                        <h4>3. Paste this callback URL exactly</h4>
+                        <p>Character for character. One stray slash and X refuses the sign-in with an error that does not tell you why.</p>
+                        <div class="copy-row">
+                          <input type="text" id="x-redirect-uri" readonly />
+                          <button class="btn btn-sm" data-copy="#x-redirect-uri">Copy</button>
+                        </div>
+                        <p>The Website URL field can be anything you own. Your own site is fine.</p>
+                      </div>
+                    </div>
+                    <div class="guide-step">
+                      <div>
+                        <h4>4. Copy the OAuth 2.0 credentials</h4>
+                        <p>From <span class="kbd">Keys and tokens</span>, copy the <strong>OAuth 2.0 Client ID</strong>. You only need the Client Secret if you chose a <em>Confidential</em> app.</p>
+                      </div>
                     </div>
                   </div>
-                  <div class="guide-step">
-                    <div><h4>Copy the OAuth 2.0 credentials</h4><p>From the <span class="kbd">Keys and tokens</span> tab, copy the <strong>OAuth 2.0 Client ID</strong>. The Client Secret is only needed if your app type is <em>Confidential</em>.</p></div>
+                </div>
+
+                <div class="grid-2">
+                  <div class="field">
+                    <label for="x-client-id">OAuth 2.0 Client ID</label>
+                    <input type="text" id="x-client-id" placeholder="e.g. VGhpcyBpcyBhbiBleGFtcGxl" autocomplete="off" spellcheck="false" />
+                  </div>
+                  <div class="field">
+                    <label for="x-client-secret">Client Secret <span class="faint">(confidential apps only)</span></label>
+                    <input type="password" id="x-client-secret" placeholder="Leave empty for public apps" autocomplete="off" spellcheck="false" />
                   </div>
                 </div>
-              </div>
-
-              <div class="grid-2" style="margin-top:16px">
-                <div class="field">
-                  <label for="x-client-id">OAuth 2.0 Client ID</label>
-                  <input type="text" id="x-client-id" placeholder="e.g. VGhpcyBpcyBhbiBleGFtcGxl" autocomplete="off" spellcheck="false" />
-                </div>
-                <div class="field">
-                  <label for="x-client-secret">Client Secret <span class="faint">(confidential apps only)</span></label>
-                  <input type="password" id="x-client-secret" placeholder="Leave empty for public apps" autocomplete="off" spellcheck="false" />
-                </div>
-              </div>
-              <p class="tiny faint" style="margin-top:8px">Stored encrypted (AES-256-GCM) against your session only, and dropped when you disconnect.</p>
+                <p class="tiny faint">Encrypted (AES-256-GCM) against your session and thrown away when you disconnect.</p>
               </div>
             </div>
           </div>
           <div class="card-foot" id="x-connect-foot">
-            <button class="btn btn-primary" id="x-connect-btn"><svg><use href="#i-link"/></svg> Connect with X</button>
-            <span class="tiny faint">Opens x.com — you approve the permissions there.</span>
+            <button class="btn btn-primary" id="x-connect-btn">Connect with X</button>
+            <span class="tiny faint">Opens x.com. You approve the permissions there.</span>
           </div>
         </article>
 
@@ -188,79 +198,76 @@
           <div class="card-head with-body">
             <span class="step-num">2</span>
             <div>
-              <h2>Choose where the list comes from</h2>
-              <p>The archive is the only complete source for accounts older than ~3,200 posts.</p>
+              <h2>Where the list comes from</h2>
+              <p>If you have posted more than about 3,200 times, the archive is the only source that can see all of it.</p>
             </div>
           </div>
           <div class="card-body">
             <div class="choices">
               <button class="choice" data-source="archive" aria-pressed="true">
-                <span class="ico"><svg width="17" height="17"><use href="#i-upload"/></svg></span>
+                <span class="ico"></span>
                 <span>
                   <strong>Upload my X data archive</strong>
-                  <span>Complete history, no API reads, nothing uploaded — the .zip is parsed inside this tab.</span>
+                  <span>Your whole history, no API reads, nothing uploaded. The .zip is opened inside this tab.</span>
                 </span>
                 <span class="badge good">Recommended</span>
               </button>
               <button class="choice" data-source="api" aria-pressed="false">
-                <span class="ico"><svg width="17" height="17"><use href="#i-cloud"/></svg></span>
+                <span class="ico"></span>
                 <span>
-                  <strong>Scan my recent posts via the API</strong>
-                  <span>No download needed, but X caps this at roughly your last 3,200 posts and reads may be billed.</span>
+                  <strong>Scan my recent posts through the API</strong>
+                  <span>No download to wait for, but X stops at roughly your last 3,200 posts and may bill you for the reading.</span>
                 </span>
                 <span class="badge warn">Limited</span>
               </button>
             </div>
 
             <div id="x-source-archive">
-              <div class="notice info">
-                <svg><use href="#i-info"/></svg>
+              <div class="notice">
                 <div>
-                  <strong>How to get your archive:</strong> on x.com go to <span class="kbd">Settings → Your account → Download an archive of your data</span>.
-                  X emails you a link, usually within 24 hours. Upload the .zip exactly as it arrives.
+                  <strong>Getting your archive:</strong> on x.com, <span class="kbd">Settings &rarr; Your account &rarr; Download an archive of your data</span>.
+                  X emails a link, usually inside 24 hours. Upload the .zip exactly as it arrives — do not unpack it first.
                 </div>
               </div>
 
-              <div class="field" style="margin-top:14px">
-                <label for="x-archive-target">What do you want to remove?</label>
+              <div class="field">
+                <label for="x-archive-target">What do you want gone?</label>
                 <select id="x-archive-target">
                   <option value="tweets">Posts, replies and reposts (tweets.js)</option>
                   <option value="likes">Likes — un-like everything (like.js)</option>
                 </select>
               </div>
 
-              <div class="dropzone" id="x-dropzone" tabindex="0" role="button" aria-label="Upload your X archive" style="margin-top:14px">
-                <svg><use href="#i-upload"/></svg>
+              <div class="dropzone" id="x-dropzone" tabindex="0" role="button" aria-label="Upload your X archive">
                 <strong>Drop your archive here, or click to browse</strong>
-                <span>Accepts the full <code>twitter-…​.zip</code> or a single <code>tweets.js</code> / <code>like.js</code></span>
+                <span>Takes the whole <code>twitter-….zip</code>, or a single <code>tweets.js</code> / <code>like.js</code></span>
                 <input type="file" id="x-file" accept=".zip,.js,application/zip" hidden />
               </div>
 
-              <div id="x-archive-progress" hidden style="margin-top:14px">
-                <div class="row" style="justify-content:space-between">
+              <div id="x-archive-progress" hidden>
+                <div class="row">
                   <span class="small" id="x-archive-status">Reading…</span>
                   <span class="small faint num" id="x-archive-pct">0%</span>
                 </div>
-                <div class="meter is-running" style="margin-top:7px"><i id="x-archive-bar"></i></div>
+                <div class="meter is-running"><i id="x-archive-bar"></i></div>
               </div>
 
-              <div id="x-archive-result" hidden style="margin-top:14px"></div>
+              <div id="x-archive-result" hidden></div>
             </div>
 
             <div id="x-source-api" hidden>
               <div class="notice warn">
-                <svg><use href="#i-warn"/></svg>
                 <div>
-                  <strong>Two things to know.</strong>
+                  <strong>Two things before you pick this.</strong>
                   <ul>
-                    <li>X's timeline endpoint only returns roughly your most recent <strong>3,200</strong> posts. Older posts are invisible to it — use the archive for those.</li>
-                    <li>Since February 2026 new developer accounts are billed per use. Reading 3,200 posts is about <strong id="x-read-cost">$16</strong> at the indicative list price.</li>
+                    <li>X's timeline endpoint returns roughly your most recent <strong>3,200</strong> posts and no more. Everything older is invisible to it. Use the archive for those.</li>
+                    <li>New developer accounts are billed per use since February 2026. Reading 3,200 posts runs about <strong id="x-read-cost">$16</strong> at list price — before you have deleted anything.</li>
                   </ul>
                 </div>
               </div>
-              <div class="grid-2" style="margin-top:14px">
+              <div class="grid-2">
                 <div class="field">
-                  <label for="x-api-target">What do you want to remove?</label>
+                  <label for="x-api-target">What do you want gone?</label>
                   <select id="x-api-target">
                     <option value="x_posts">Posts, replies and reposts</option>
                     <option value="x_likes">Likes — un-like everything</option>
@@ -269,7 +276,7 @@
                 <div class="field">
                   <label for="x-api-max">Stop after (0 = no limit)</label>
                   <input type="number" id="x-api-max" min="0" step="100" value="0" />
-                  <span class="hint">A safety cap on how many items to enumerate.</span>
+                  <span class="hint">A cap on how many items to enumerate, in case you change your mind.</span>
                 </div>
               </div>
             </div>
@@ -281,8 +288,8 @@
           <div class="card-head with-body">
             <span class="step-num">3</span>
             <div>
-              <h2>Pick exactly what goes</h2>
-              <p>Filters run before anything is deleted. Nothing outside this selection is ever touched.</p>
+              <h2>What goes</h2>
+              <p>Filters run again on the server before anything is deleted. Nothing outside this selection is ever touched.</p>
             </div>
             <div class="head-aside"><span class="badge info" id="x-filter-count">0 selected</span></div>
           </div>
@@ -317,27 +324,25 @@
                 </select>
               </div>
               <div class="field">
-                <label for="f-maxlikes">Keep posts above <span class="faint">N</span> likes</label>
+                <label for="f-maxlikes">Keep anything above <span class="faint">N</span> likes</label>
                 <input type="number" id="f-maxlikes" min="0" step="1" placeholder="No limit" />
-                <span class="hint">Protects your greatest hits.</span>
+                <span class="hint">Saves your greatest hits from your worst decade.</span>
               </div>
               <div class="field">
                 <label>Include</label>
-                <div style="display:flex;flex-direction:column;gap:6px;padding-top:5px">
-                  <label class="check"><input type="checkbox" id="f-originals" checked /> Original posts</label>
-                  <label class="check"><input type="checkbox" id="f-replies" checked /> Replies</label>
-                  <label class="check"><input type="checkbox" id="f-retweets" checked /> Reposts</label>
-                </div>
+                <label class="check"><input type="checkbox" id="f-originals" checked /> Original posts</label>
+                <label class="check"><input type="checkbox" id="f-replies" checked /> Replies</label>
+                <label class="check"><input type="checkbox" id="f-retweets" checked /> Reposts</label>
               </div>
             </div>
 
             <hr class="divider" />
 
-            <div class="row" style="justify-content:space-between">
+            <div class="row">
               <h3>Preview</h3>
               <span class="small faint" id="x-preview-note">Showing the first 100 matches</span>
             </div>
-            <div class="preview" id="x-preview"><div class="empty">Load a source in step 2 to see what would be deleted.</div></div>
+            <div class="preview" id="x-preview"><div class="empty">Load a source in step 2 and the list appears here.</div></div>
           </div>
         </article>
 
@@ -346,15 +351,15 @@
           <div class="card-head with-body">
             <span class="step-num">4</span>
             <div>
-              <h2>Review and run</h2>
-              <p>Start with a dry run. It calls no delete endpoints and produces the exact list that would be removed.</p>
+              <h2>Check it, then run it</h2>
+              <p>Do the dry run. It calls no delete endpoint and hands you the exact list that would have gone.</p>
             </div>
           </div>
           <div class="card-body">
             <label class="switch">
               <input type="checkbox" id="x-dry-run" checked />
               <span class="track"></span>
-              <span class="label">Dry run<small>List what would be deleted, delete nothing.</small></span>
+              <span class="label">Dry run<small>List what would be deleted. Delete nothing.</small></span>
             </label>
 
             <div class="stats" id="x-estimate">
@@ -367,29 +372,28 @@
             <div id="x-quota-panel" hidden></div>
 
             <div class="notice warn">
-              <svg><use href="#i-warn"/></svg>
               <div>
-                <strong>Before you start.</strong>
+                <strong>Read this bit.</strong>
                 <ul>
-                  <li>Deletion is <strong>permanent</strong>. X has no undo and no trash folder.</li>
-                  <li>Long jobs are normal — X allows 50 deletions per 15 minutes, so 20,000 posts takes about 4 days.</li>
-                  <li>Heavy automated activity can trigger a temporary account lock. This tool paces itself deliberately; do not run two jobs on one account.</li>
-                  <li>Keep the archive .zip. Once posts are gone, it is the only record you have.</li>
+                  <li>Deletion is <strong>permanent</strong>. X has no undo and no bin. Whatever you tick here is gone for good.</li>
+                  <li>A long job is normal, not a bug. Fifty deletions per fifteen minutes means 20,000 posts takes about four days.</li>
+                  <li>Bursts of automated activity can get an account temporarily locked. This paces itself on purpose. Do not run two jobs against one account to go faster.</li>
+                  <li>Keep the .zip. Once the posts are gone it is the only copy of them that exists.</li>
                 </ul>
               </div>
             </div>
           </div>
           <div class="card-foot">
-            <button class="btn btn-primary btn-lg" id="x-start"><svg><use href="#i-play"/></svg> <span id="x-start-label">Start dry run</span></button>
+            <button class="btn btn-primary btn-lg" id="x-start"><span id="x-start-label">Start dry run</span></button>
             <span class="spacer"></span>
-            <span class="tiny faint">You can pause or cancel at any point.</span>
+            <span class="tiny faint">Pause or cancel at any point.</span>
           </div>
         </article>
 
         <!-- Step 5: progress -->
         <article class="card" id="x-step-progress" hidden>
           <div class="card-head with-body">
-            <span class="step-num"><svg width="13" height="13"><use href="#i-clock"/></svg></span>
+            <span class="step-num"></span>
             <div>
               <h2 id="x-job-title">Job running</h2>
               <p id="x-job-sub">Working through your selection.</p>
@@ -403,20 +407,20 @@
               <div class="stat"><div class="k">Remaining</div><div class="v" id="x-v-remaining">0</div></div>
               <div class="stat muted"><div class="k">Skipped</div><div class="v" id="x-v-skipped">0</div></div>
               <div class="stat bad"><div class="k">Failed</div><div class="v" id="x-v-failed">0</div></div>
-              <div class="stat muted"><div class="k">Finishes</div><div class="v" id="x-v-eta" style="font-size:1rem">—</div></div>
+              <div class="stat muted"><div class="k">Finishes</div><div class="v" id="x-v-eta">—</div></div>
             </div>
             <div id="x-job-quota"></div>
             <div id="x-job-error"></div>
             <details id="x-job-log-wrap">
-              <summary class="small muted" style="cursor:pointer">Recent activity</summary>
-              <div id="x-job-log" style="margin-top:9px"></div>
+              <summary class="small muted">Recent activity</summary>
+              <div id="x-job-log"></div>
             </details>
           </div>
           <div class="card-foot">
-            <button class="btn" id="x-job-pause"><svg><use href="#i-pause"/></svg> Pause</button>
-            <button class="btn" id="x-job-cancel"><svg><use href="#i-stop"/></svg> Cancel</button>
+            <button class="btn" id="x-job-pause">Pause</button>
+            <button class="btn" id="x-job-cancel">Cancel</button>
             <span class="spacer"></span>
-            <button class="btn" id="x-job-export"><svg><use href="#i-download"/></svg> Export log (CSV)</button>
+            <button class="btn" id="x-job-export">Export log (CSV)</button>
             <button class="btn btn-ghost" id="x-job-new">Start another job</button>
           </div>
         </article>
@@ -427,14 +431,18 @@
     <!-- ============================ THREADS ============================ -->
     <section class="view" id="view-threads" role="tabpanel" hidden>
       <div class="hero">
-        <h1>Clean up Threads</h1>
-        <p>Threads is the one Meta surface with a real deletion API. Meta caps it at 100 deletions per profile per 24 hours, so PostCleaner paces the job over days.</p>
+        <h2>Clean up Threads</h2>
+        <p>
+          Threads is the one Meta surface with a deletion API that actually works.
+          Meta allows a hundred deletions per profile per day, so a thousand posts
+          is a ten-day job. It runs without you.
+        </p>
       </div>
       <div class="stack" id="threads-stack">
         <article class="card is-active">
           <div class="card-head with-body">
             <span class="step-num">1</span>
-            <div><h2>Connect Threads</h2><p>Requires the <code>threads_basic</code> and <code>threads_delete</code> permissions.</p></div>
+            <div><h2>Connect Threads</h2><p>Needs the <code>threads_basic</code> and <code>threads_delete</code> permissions.</p></div>
             <div class="head-aside" id="th-conn-badge"></div>
           </div>
           <div class="card-body" id="th-connect-body"></div>
@@ -443,7 +451,7 @@
         <article class="card is-locked" id="th-step-run">
           <div class="card-head with-body">
             <span class="step-num">2</span>
-            <div><h2>Select and run</h2><p>PostCleaner enumerates your posts through the official API, then deletes what matches.</p></div>
+            <div><h2>Pick what goes, then run it</h2><p>Your posts are listed through the official API, and what matches the filters is deleted.</p></div>
           </div>
           <div class="card-body">
             <div class="grid-2">
@@ -457,21 +465,20 @@
             <label class="switch">
               <input type="checkbox" id="th-dry-run" checked />
               <span class="track"></span>
-              <span class="label">Dry run<small>Enumerate and list, delete nothing.</small></span>
+              <span class="label">Dry run<small>List everything. Delete nothing.</small></span>
             </label>
             <div class="notice warn">
-              <svg><use href="#i-warn"/></svg>
-              <div><strong>100 deletions per 24 hours.</strong> That is Meta's limit, not ours. A 1,000-post profile takes about ten days; the job survives that fine and resumes on its own.</div>
+              <div><strong>A hundred deletions per 24 hours.</strong> Meta's limit, not ours, and there is no way to buy past it. A thousand posts is about ten days. The job survives that comfortably and picks itself back up.</div>
             </div>
           </div>
           <div class="card-foot">
-            <button class="btn btn-primary" id="th-start"><svg><use href="#i-play"/></svg> Start dry run</button>
+            <button class="btn btn-primary" id="th-start">Start dry run</button>
           </div>
         </article>
 
         <article class="card" id="th-step-progress" hidden>
           <div class="card-head with-body">
-            <span class="step-num"><svg width="13" height="13"><use href="#i-clock"/></svg></span>
+            <span class="step-num"></span>
             <div><h2 id="th-job-title">Job running</h2><p id="th-job-sub"></p></div>
             <div class="head-aside" id="th-job-state"></div>
           </div>
@@ -481,15 +488,15 @@
               <div class="stat good"><div class="k" id="th-k-deleted">Deleted</div><div class="v" id="th-v-deleted">0</div></div>
               <div class="stat"><div class="k">Remaining</div><div class="v" id="th-v-remaining">0</div></div>
               <div class="stat bad"><div class="k">Failed</div><div class="v" id="th-v-failed">0</div></div>
-              <div class="stat muted"><div class="k">Finishes</div><div class="v" id="th-v-eta" style="font-size:1rem">—</div></div>
+              <div class="stat muted"><div class="k">Finishes</div><div class="v" id="th-v-eta">—</div></div>
             </div>
             <div id="th-job-error"></div>
           </div>
           <div class="card-foot">
-            <button class="btn" id="th-job-pause"><svg><use href="#i-pause"/></svg> Pause</button>
-            <button class="btn" id="th-job-cancel"><svg><use href="#i-stop"/></svg> Cancel</button>
+            <button class="btn" id="th-job-pause">Pause</button>
+            <button class="btn" id="th-job-cancel">Cancel</button>
             <span class="spacer"></span>
-            <button class="btn" id="th-job-export"><svg><use href="#i-download"/></svg> Export log</button>
+            <button class="btn" id="th-job-export">Export log</button>
           </div>
         </article>
       </div>
@@ -498,38 +505,42 @@
     <!-- ============================ FACEBOOK ============================ -->
     <section class="view" id="view-facebook" role="tabpanel" hidden>
       <div class="hero">
-        <h1>Facebook</h1>
-        <p>Here is the honest picture: Meta provides no API to delete posts from a personal timeline. PostCleaner automates what Meta actually allows, and gives you a proper guided path for the rest.</p>
+        <h2>Facebook</h2>
+        <p>
+          The honest version, which you will not get from the tools selling you
+          this: your personal timeline cannot be bulk-deleted by any API, ours
+          included. Here is what can be automated, and how to do the rest by hand
+          without getting your account locked.
+        </p>
       </div>
 
       <div class="stack">
         <article class="card">
           <div class="card-head with-body">
-            <span class="step-num"><svg width="13" height="13"><use href="#i-shield"/></svg></span>
+            <span class="step-num"></span>
             <div>
-              <h2>What is and isn't possible</h2>
-              <p>No tool can honestly promise more than this without breaking Meta's terms.</p>
+              <h2>What is and is not possible</h2>
+              <p>Nobody can honestly promise more than this without breaking Meta's terms on your behalf.</p>
             </div>
           </div>
           <div class="card-body">
             <div class="notice danger">
-              <svg><use href="#i-warn"/></svg>
               <div>
                 <strong>Personal timeline posts cannot be deleted through any API.</strong>
-                Meta removed <code>publish_actions</code> in Graph API v3.0 (2018) and never replaced it. The <code>user_posts</code>
-                permission is read-only. Any tool claiming to bulk-delete your personal timeline automatically is either driving your
-                logged-in browser session or calling private endpoints — both violate Facebook's Terms of Service and are a common cause
-                of account locks. PostCleaner will not do that.
+                Meta removed <code>publish_actions</code> in Graph API v3.0 back in 2018 and never
+                replaced it. The <code>user_posts</code> permission reads and nothing more. Any tool
+                claiming to bulk-delete your timeline automatically is either driving your logged-in
+                browser session or calling private endpoints. Both break Facebook's terms, and both
+                are a well-known way to get locked out. We will not ship that.
               </div>
             </div>
             <div class="notice success">
-              <svg><use href="#i-check"/></svg>
               <div>
-                <strong>What PostCleaner does instead:</strong>
+                <strong>What this does instead:</strong>
                 <ul>
-                  <li>Fully automates deletion for <strong>Facebook Pages you administer</strong> — posts and your own comments, via the official Graph API.</li>
-                  <li>Reads your <strong>“Download Your Information”</strong> export offline to show exactly how much is where, so you know which years to attack first.</li>
-                  <li>Gives you a step-by-step <strong>Manage Activity</strong> walkthrough — Facebook's own bulk tool, 50 items at a time.</li>
+                  <li>Deletes posts and your own comments on <strong>Facebook Pages you administer</strong>, fully automated, through the official Graph API.</li>
+                  <li>Reads your <strong>Download Your Information</strong> export offline and tells you how much is where, so you know which years are worth attacking.</li>
+                  <li>Walks you through <strong>Manage Activity</strong>, Facebook's own bulk tool, fifty items at a time.</li>
                 </ul>
               </div>
             </div>
@@ -538,8 +549,8 @@
 
         <article class="card">
           <div class="card-head with-body">
-            <span class="step-num"><svg width="13" height="13"><use href="#i-facebook"/></svg></span>
-            <div><h2>Pages you manage</h2><p>Fully supported: posts and page comments, deleted through the Graph API.</p></div>
+            <span class="step-num"></span>
+            <div><h2>Pages you manage</h2><p>Fully supported. Posts and page comments, deleted through the Graph API.</p></div>
             <div class="head-aside" id="fb-conn-badge"></div>
           </div>
           <div class="card-body" id="fb-pages-body"></div>
@@ -547,7 +558,7 @@
 
         <article class="card" id="fb-step-progress" hidden>
           <div class="card-head with-body">
-            <span class="step-num"><svg width="13" height="13"><use href="#i-clock"/></svg></span>
+            <span class="step-num"></span>
             <div><h2 id="fb-job-title">Job running</h2><p id="fb-job-sub"></p></div>
             <div class="head-aside" id="fb-job-state"></div>
           </div>
@@ -557,46 +568,44 @@
               <div class="stat good"><div class="k" id="fb-k-deleted">Deleted</div><div class="v" id="fb-v-deleted">0</div></div>
               <div class="stat"><div class="k">Remaining</div><div class="v" id="fb-v-remaining">0</div></div>
               <div class="stat bad"><div class="k">Failed</div><div class="v" id="fb-v-failed">0</div></div>
-              <div class="stat muted"><div class="k">Finishes</div><div class="v" id="fb-v-eta" style="font-size:1rem">—</div></div>
+              <div class="stat muted"><div class="k">Finishes</div><div class="v" id="fb-v-eta">—</div></div>
             </div>
             <div id="fb-job-error"></div>
           </div>
           <div class="card-foot">
-            <button class="btn" id="fb-job-pause"><svg><use href="#i-pause"/></svg> Pause</button>
-            <button class="btn" id="fb-job-cancel"><svg><use href="#i-stop"/></svg> Cancel</button>
+            <button class="btn" id="fb-job-pause">Pause</button>
+            <button class="btn" id="fb-job-cancel">Cancel</button>
             <span class="spacer"></span>
-            <button class="btn" id="fb-job-export"><svg><use href="#i-download"/></svg> Export log</button>
+            <button class="btn" id="fb-job-export">Export log</button>
           </div>
         </article>
 
         <article class="card">
           <div class="card-head with-body">
-            <span class="step-num"><svg width="13" height="13"><use href="#i-chart"/></svg></span>
+            <span class="step-num"></span>
             <div>
               <h2>Analyse your Facebook export</h2>
-              <p>See how much history you actually have, broken down by year. Read-only, and the file never leaves this tab.</p>
+              <p>Find out how much history you actually have, by year. Read-only, and the file never leaves this tab.</p>
             </div>
           </div>
           <div class="card-body">
-            <div class="notice info">
-              <svg><use href="#i-info"/></svg>
+            <div class="notice">
               <div>
-                Request it at <span class="kbd">Settings &amp; privacy → Accounts Center → Your information and permissions → Download your information</span>.
-                Choose <strong>JSON</strong> (not HTML), include <strong>Posts</strong> and <strong>Comments</strong>, and pick the full date range.
+                Request it at <span class="kbd">Settings &amp; privacy &rarr; Accounts Centre &rarr; Your information and permissions &rarr; Download your information</span>.
+                Choose <strong>JSON</strong> rather than HTML, include <strong>Posts</strong> and <strong>Comments</strong>, and set the range to all time.
               </div>
             </div>
             <div class="dropzone" id="fb-dropzone" tabindex="0" role="button" aria-label="Upload your Facebook export">
-              <svg><use href="#i-upload"/></svg>
               <strong>Drop your Facebook export .zip here</strong>
-              <span>Parsed locally — nothing is uploaded</span>
+              <span>Read in this tab. Nothing is uploaded.</span>
               <input type="file" id="fb-file" accept=".zip,application/zip" hidden />
             </div>
             <div id="fb-archive-progress" hidden>
-              <div class="row" style="justify-content:space-between">
+              <div class="row">
                 <span class="small" id="fb-archive-status">Reading…</span>
                 <span class="small faint num" id="fb-archive-pct">0%</span>
               </div>
-              <div class="meter is-running" style="margin-top:7px"><i id="fb-archive-bar"></i></div>
+              <div class="meter is-running"><i id="fb-archive-bar"></i></div>
             </div>
             <div id="fb-archive-result"></div>
           </div>
@@ -604,21 +613,20 @@
 
         <article class="card">
           <div class="card-head with-body">
-            <span class="step-num"><svg width="13" height="13"><use href="#i-list"/></svg></span>
-            <div><h2>Delete a personal timeline, the supported way</h2><p>Facebook's own bulk tool. Tedious, but it is the only method that will not put your account at risk.</p></div>
+            <span class="step-num"></span>
+            <div><h2>Deleting a personal timeline, the supported way</h2><p>Facebook's own bulk tool. Tedious, and the only method that will not put your account at risk.</p></div>
           </div>
           <div class="card-body">
             <div class="guide">
-              <div class="guide-step"><div><h4>Open Manage Activity</h4><p>On desktop, go to your profile → <span class="kbd">⋯</span> → <span class="kbd">Activity log</span> → <span class="kbd">Manage activity</span> → <span class="kbd">Your posts</span>. On mobile it lives under <span class="kbd">Menu → Settings &amp; privacy → Activity log</span>.</p></div></div>
-              <div class="guide-step"><div><h4>Filter to one year at a time</h4><p>Use the <span class="kbd">Date</span> filter and start with your oldest year. Working year by year keeps the list short enough that the page stays responsive, and it is easy to track where you got to.</p></div></div>
-              <div class="guide-step"><div><h4>Deal with public posts first</h4><p>Add the <span class="kbd">Audience → Public</span> filter. Those are the posts anyone can find, so clearing them gives you most of the benefit for the least work.</p></div></div>
-              <div class="guide-step"><div><h4>Select and bin, 50 at a time</h4><p>Facebook caps selection at <strong>50 items</strong> per action. Tick the header checkbox to grab the visible batch, choose <span class="kbd">Bin</span> (delete) or <span class="kbd">Archive</span> (hide but keep), then repeat.</p></div></div>
-              <div class="guide-step"><div><h4>Empty the bin</h4><p>Deleted items sit in the bin for <strong>30 days</strong> before Facebook removes them for good. That is your undo window — and it means nothing is truly gone until you empty it or wait it out.</p></div></div>
-              <div class="guide-step"><div><h4>Comments and likes are separate</h4><p>Switch the dropdown from <span class="kbd">Your posts</span> to <span class="kbd">Comments</span>, <span class="kbd">Likes and reactions</span>, or <span class="kbd">Tags</span>. Each has its own list and its own 50-at-a-time limit.</p></div></div>
+              <div class="guide-step"><div><h4>1. Open Manage Activity</h4><p>On desktop: your profile &rarr; <span class="kbd">&ctdot;</span> &rarr; <span class="kbd">Activity log</span> &rarr; <span class="kbd">Manage activity</span> &rarr; <span class="kbd">Your posts</span>. On mobile it hides under <span class="kbd">Menu &rarr; Settings &amp; privacy &rarr; Activity log</span>.</p></div></div>
+              <div class="guide-step"><div><h4>2. One year at a time</h4><p>Use the <span class="kbd">Date</span> filter and start at your oldest year. Short lists keep the page responsive, and you can always tell where you got to.</p></div></div>
+              <div class="guide-step"><div><h4>3. Public posts first</h4><p>Add <span class="kbd">Audience &rarr; Public</span>. Those are the ones strangers can find, so clearing them buys you most of the benefit for the least clicking.</p></div></div>
+              <div class="guide-step"><div><h4>4. Select and bin, fifty at a time</h4><p>Facebook caps selection at <strong>50 items</strong> per action. Tick the header checkbox to grab the batch, pick <span class="kbd">Bin</span> to delete or <span class="kbd">Archive</span> to hide, and go again.</p></div></div>
+              <div class="guide-step"><div><h4>5. Empty the bin</h4><p>Binned items sit there for <strong>30 days</strong> before Facebook removes them properly. That is your undo window — and it means nothing is really gone until you empty it or wait it out.</p></div></div>
+              <div class="guide-step"><div><h4>6. Comments and likes are a separate job</h4><p>Switch the dropdown from <span class="kbd">Your posts</span> to <span class="kbd">Comments</span>, <span class="kbd">Likes and reactions</span> or <span class="kbd">Tags</span>. Each is its own list with its own fifty-at-a-time limit.</p></div></div>
             </div>
             <div class="notice warn">
-              <svg><use href="#i-warn"/></svg>
-              <div>Browser extensions that click these buttons for you are automating your logged-in session, which Facebook's terms prohibit and its automated-behaviour detection looks for. If you use one, that is your call — but PostCleaner will not ship one.</div>
+              <div>Extensions that click those buttons for you are automating your logged-in session, which Facebook's terms forbid and its automation detection is looking for. Your account, your call — but this tool will not be the one that does it.</div>
             </div>
           </div>
         </article>
@@ -628,8 +636,8 @@
     <!-- ============================== JOBS ============================== -->
     <section class="view" id="view-jobs" role="tabpanel" hidden>
       <div class="hero">
-        <h1>Your jobs</h1>
-        <p>Jobs run server-side. Close the tab, reboot your laptop, come back in three days — they carry on and you can pick up right where you left off.</p>
+        <h2>Your jobs</h2>
+        <p>Jobs run on the server. Shut the tab, reboot, come back on Thursday — they carry on without you and you pick up where you left off.</p>
       </div>
       <div class="stack" id="jobs-list"><div class="card"><div class="empty">No jobs yet.</div></div></div>
     </section>
@@ -637,12 +645,22 @@
   </main>
 
   <footer class="site">
-    <p>PostCleaner uses only official, documented APIs. It never scrapes, never automates a logged-in browser session, and never asks for your password.</p>
-    <p style="margin-top:6px">
-      Revoke access any time:
-      <a href="https://x.com/settings/connected_apps" target="_blank" rel="noopener noreferrer">X connected apps</a> ·
-      <a href="https://www.facebook.com/settings?tab=applications" target="_blank" rel="noopener noreferrer">Facebook apps</a> ·
+    <p>
+      Official, documented APIs only. Nothing is scraped, no logged-in browser session
+      is automated, and you are never asked for your password.
+    </p>
+    <p>
+      Revoke access whenever you like:
+      <a href="https://x.com/settings/connected_apps" target="_blank" rel="noopener noreferrer">X connected apps</a> &middot;
+      <a href="https://www.facebook.com/settings?tab=applications" target="_blank" rel="noopener noreferrer">Facebook apps</a> &middot;
       <a href="https://www.threads.net/settings/account" target="_blank" rel="noopener noreferrer">Threads</a>
+    </p>
+    <p>
+      Made with spite for bloat &middot; part of
+      <a href="https://1999loc.com/">1999LOC</a><br>
+      <a href="https://1999loc.com/">count lines of code</a> |
+      <a href="https://1999loc.com/golf">code golf</a> |
+      <a href="https://github.com/letsgettoworkbro/xpostdeleter">source</a>
     </p>
   </footer>
 </div>
@@ -651,7 +669,7 @@
 <div class="modal-backdrop" id="modal" hidden>
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-head">
-      <span class="ico"><svg width="17" height="17"><use href="#i-trash"/></svg></span>
+      <span class="ico"></span>
       <div>
         <h2 id="modal-title">Delete 0 posts?</h2>
         <p class="small muted" id="modal-sub">This cannot be undone.</p>

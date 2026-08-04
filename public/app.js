@@ -47,8 +47,14 @@ function fmtDate(iso) {
   return Number.isNaN(d.getTime()) ? '—' : d.toISOString().slice(0, 10);
 }
 
-function icon(id, size = 16) {
-  return `<svg width="${size}" height="${size}" aria-hidden="true"><use href="#${id}"/></svg>`;
+/**
+ * Icons went away with the 1999 restyle — a page of this vintage has no
+ * iconography, and the SVG sprite went with it. This stays as a no-op rather
+ * than being deleted from ~20 call sites: the generated markup then matches
+ * index.html exactly, and there is no second place to keep in sync.
+ */
+function icon() {
+  return '';
 }
 
 function escapeHtml(value) {
@@ -127,17 +133,9 @@ const LS = {
   },
 };
 
-/* ------------------------------------------------------------------ theme */
-
-function applyTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  $('#theme-toggle').innerHTML = icon(theme === 'dark' ? 'i-moon' : 'i-sun');
-  LS.set('theme', theme);
-}
-applyTheme(LS.get('theme', 'dark'));
-$('#theme-toggle').addEventListener('click', () => {
-  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
-});
+/* There is no theme. The page is black text on a white background, the same
+ * way the counter next door is, and there is nothing to toggle. The stored
+ * `postcleaner:theme` preference from the old design is simply ignored. */
 
 /* ------------------------------------------------------------------- tabs */
 

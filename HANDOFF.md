@@ -15,7 +15,25 @@ SPA and a JSON API, with Durable Objects running jobs that can take days.
 
 - **Repo:** `LetsGetToWorkBro/xpostdeleter`, branch `main`
 - **Live:** https://xpostdeleter.nameless-forest-17dc.workers.dev
+- **Intended home:** https://delete.1999loc.com — a Custom Domain on the same
+  Cloudflare account as the LOC.1999 counter. Until that is added in the
+  dashboard, the canonical tag and the counter's footer link both point at a
+  host that does not resolve. Adding it is the one outstanding step.
 - ~7,900 lines. No build step for the frontend, no runtime dependencies at all.
+
+**The frontend is in the 1999LOC house style.** Black on white, Times New Roman,
+1px borders, no icons, no dark mode. That is deliberate and it is shared with
+the counter at 1999loc.com — the two are meant to read as one site.
+
+The restyle repainted rather than rebuilt: `app.js` queries and regenerates this
+markup using a fixed vocabulary of class names (`card`, `notice`, `stat`,
+`meter`, `choice`, `badge`, `btn`, `guide-step`, `toast`, …), and every one of
+them is styled in `styles.css`. **Renaming a class means editing JavaScript.**
+Restyle in the stylesheet instead. Two consequences worth knowing:
+
+- `icon()` in `app.js` is a no-op returning `''`. The SVG sprite is gone, and
+  `svg { display: none }` catches anything that slips through.
+- There is no theme toggle. Any stored `postcleaner:theme` value is ignored.
 
 ---
 
@@ -206,10 +224,18 @@ docs/
 
 ## 9. Next steps, in order
 
+0. **Add the Custom Domain** `delete.1999loc.com` in the Cloudflare dashboard:
+   Workers → this Worker → Settings → Domains & Routes → Add → Custom Domain.
+   Do this *before* the X app below, because the callback URL has to match the
+   final origin character for character and changing it later means editing it
+   in X's portal too.
 1. **X developer app.** Signup was in progress at last contact (account name
    "Postcleaner"). Needs: **Read and write** permissions, type **Web App**, and
-   callback exactly
-   `https://xpostdeleter.nameless-forest-17dc.workers.dev/auth/x/callback`.
+   callback exactly `https://delete.1999loc.com/auth/x/callback` — or
+   `https://xpostdeleter.nameless-forest-17dc.workers.dev/auth/x/callback` if
+   step 0 is skipped. The redirect URI is derived from the request origin
+   (`redirectUriFor` in `src/routes/auth.ts`), so it follows whichever host the
+   user actually arrives on unless `PUBLIC_BASE_URL` is set to pin it.
 2. **X archive.** Request at `x.com → Settings → Your account → Download an
    archive of your data`. Takes ~24h and is the only complete source of post IDs
    beyond the most recent ~3,200.

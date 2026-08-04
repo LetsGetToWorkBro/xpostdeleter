@@ -3,6 +3,8 @@
 Mass-delete your own posts on **X (Twitter)**, **Threads** and **Facebook Pages** — using
 official APIs only, on a single Cloudflare Worker.
 
+Part of [1999LOC](https://1999loc.com/). Intended home: **https://delete.1999loc.com**.
+
 Jobs run server-side in Durable Objects, so a 40,000-post cleanup that takes four days keeps
 going after you close the tab, reboot your laptop, or lose your connection.
 
@@ -61,6 +63,22 @@ Terms of Service and are a common cause of account locks, so PostCleaner does ne
 - **Rate limits are respected, not fought.** The window is persisted in the Durable Object, so a
   redeploy or a restart can't cause a burst.
 - **Everything is resumable.** Pause, cancel, close the tab, come back in three days.
+- **The UI looks like 1999 on purpose.** Black on white, Times New Roman, 1px borders, no icons,
+  no dark mode, no build step. It is the same house style as the line counter at
+  [1999loc.com](https://1999loc.com/) — the two are siblings and are meant to read as one site.
+  If a choice is ever between prettier and clearer, it goes to clearer.
+
+### A note before you restyle anything
+
+`public/app.js` queries and regenerates the markup in `public/index.html` using a fixed
+vocabulary of class names — `card`, `card-body`, `notice`, `stat`, `meter`, `choice`, `badge`,
+`btn`, `guide-step`, `toast` and friends — and every one of them is styled in
+`public/styles.css`. **Renaming a class means editing JavaScript**, and the failure is silent:
+the page still renders, it just quietly stops doing something. Restyle in the stylesheet.
+
+Two leftovers from the restyle worth knowing about: `icon()` in `app.js` is a deliberate no-op
+returning `''` (the SVG sprite is gone, and `svg { display: none }` catches the rest), and there
+is no theme toggle — any stored `postcleaner:theme` value is ignored.
 
 ---
 
