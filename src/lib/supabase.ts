@@ -1,7 +1,7 @@
 /**
  * Optional Supabase mirror.
  *
- * PostCleaner works completely without Supabase — jobs live in Durable Objects.
+ * DELETE.1999 works completely without Supabase — jobs live in Durable Objects.
  * If (and only if) SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are configured we
  * additionally mirror job headers so a user can see their history across
  * devices, and so an operator can keep records beyond the 30-day session TTL.

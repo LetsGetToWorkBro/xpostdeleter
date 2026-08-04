@@ -6,7 +6,7 @@
  * There is no supported Graph API path for deleting posts from a *personal*
  * Facebook timeline. `publish_actions` was removed in Graph API v3.0 (2018) and
  * nothing replaced it; `user_posts` grants read access only, and DELETE on a
- * personal post id is rejected. PostCleaner therefore does not pretend to
+ * personal post id is rejected. DELETE.1999 therefore does not pretend to
  * automate that — the app ships a guided Activity Log / Manage Activity flow
  * instead, plus an offline analyser for your "Download Your Information" export.
  *
@@ -65,7 +65,7 @@ const THROTTLE_CODES = new Set([4, 17, 32, 613, 80001, 80002, 80003, 80004]);
 
 async function metaFetch(url: string, init: RequestInit = {}, attempt = 0): Promise<any> {
   const headers = new Headers(init.headers);
-  headers.set('user-agent', 'PostCleaner/1.0');
+  headers.set('user-agent', 'DELETE.1999/1.0');
   const res = await fetch(url, { ...init, headers });
   const raw = await res.text();
   let body: any = null;

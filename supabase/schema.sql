@@ -1,5 +1,5 @@
 -- ============================================================================
--- PostCleaner — optional Supabase schema.
+-- DELETE.1999 — optional Supabase schema.
 --
 -- You do NOT need this. Jobs live in Durable Objects and work without any
 -- database. Apply this only if you set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
@@ -61,7 +61,7 @@ revoke all on public.preferences from anon, authenticated;
 
 -- create extension if not exists pg_cron;
 -- select cron.schedule(
---   'postcleaner-prune',
+--   'delete1999-prune',
 --   '0 4 * * *',
 --   $$ delete from public.jobs
 --      where finished_at is not null and finished_at < now() - interval '90 days' $$

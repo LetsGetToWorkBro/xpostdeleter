@@ -1,9 +1,13 @@
-# PostCleaner
+# DELETE.1999
 
 Mass-delete your own posts on **X (Twitter)**, **Threads** and **Facebook Pages** — using
 official APIs only, on a single Cloudflare Worker.
 
 Part of [1999LOC](https://1999loc.com/). Intended home: **https://delete.1999loc.com**.
+
+> The repository and the Cloudflare Worker are both still called `xpostdeleter`, which
+> predates the name. Renaming the Worker would create a *new* one and leave the Durable
+> Objects — and every stored job — behind on the old name, so it stays.
 
 Jobs run server-side in Durable Objects, so a 40,000-post cleanup that takes four days keeps
 going after you close the tab, reboot your laptop, or lose your connection.
@@ -48,7 +52,7 @@ That last row is not a limitation of this tool. Meta removed `publish_actions` i
 (2018) and never replaced it; `user_posts` is read-only, and `DELETE` on a personal post id is
 refused. Any product claiming to bulk-delete your personal Facebook timeline "via the API" is
 either driving your logged-in browser session or calling private endpoints. Both break Facebook's
-Terms of Service and are a common cause of account locks, so PostCleaner does neither. See
+Terms of Service and are a common cause of account locks, so DELETE.1999 does neither. See
 [The Facebook reality](#the-facebook-reality) for what it does instead.
 
 ### Design commitments
@@ -58,7 +62,7 @@ Terms of Service and are a common cause of account locks, so PostCleaner does ne
 - **Dry run first.** Every flow defaults to a dry run that calls no delete endpoint and produces
   the exact list that *would* go. Export it, read it, then flip the switch.
 - **Your archive never leaves your browser.** X and Facebook exports contain DMs, your phone
-  number, your email and your IP history. PostCleaner parses them in the tab with a hand-rolled
+  number, your email and your IP history. DELETE.1999 parses them in the tab with a hand-rolled
   ZIP reader and uploads nothing but post IDs plus a 160-character excerpt for the audit log.
 - **Rate limits are respected, not fought.** The window is persisted in the Durable Object, so a
   redeploy or a restart can't cause a burst.
@@ -78,7 +82,7 @@ the page still renders, it just quietly stops doing something. Restyle in the st
 
 Two leftovers from the restyle worth knowing about: `icon()` in `app.js` is a deliberate no-op
 returning `''` (the SVG sprite is gone, and `svg { display: none }` catches the rest), and there
-is no theme toggle — any stored `postcleaner:theme` value is ignored.
+is no theme toggle — any stored `delete1999:theme` value is ignored.
 
 ---
 
@@ -178,13 +182,13 @@ cases". The penalty is losing the app and the users' accounts. The only
 legitimate lever is an Enterprise agreement, which is not a realistic path for
 this use case.
 
-PostCleaner treats the limit as a fixed constraint and engineers around the
+DELETE.1999 treats the limit as a fixed constraint and engineers around the
 *consequence* instead: a job that survives four days of waiting. That is the
 actual moat — a browser extension needs the tab open.
 
 ## Setting up your X developer app
 
-X requires every tool to authenticate through a developer app. PostCleaner is built around
+X requires every tool to authenticate through a developer app. DELETE.1999 is built around
 **bring-your-own-app**: each user pastes their own Client ID, so rate limits and any usage charges
 sit on *their* developer account rather than yours. The app walks through this on screen; here it
 is in full.
@@ -211,7 +215,7 @@ is in full.
    **Client Secret** *only* if your app type is Confidential — public apps use PKCE alone and
    should leave the secret field empty.
 
-5. **Paste them into PostCleaner** and click *Connect with X*.
+5. **Paste them into DELETE.1999** and click *Connect with X*.
 
 Requested scopes: `tweet.read`, `tweet.write`, `users.read`, `like.read`, `like.write`,
 `offline.access`. The last one is what lets a multi-day job refresh its own token.
@@ -221,7 +225,7 @@ Revoke any time at [x.com → Settings → Connected apps](https://x.com/setting
 ### Getting your X archive (strongly recommended)
 
 On x.com: **Settings → Your account → Download an archive of your data**. X emails a link, usually
-within 24 hours. Upload the `.zip` exactly as it arrives — PostCleaner finds `data/tweets.js`
+within 24 hours. Upload the `.zip` exactly as it arrives — DELETE.1999 finds `data/tweets.js`
 inside, including multi-part and Zip64 archives.
 
 **Why bother?** `GET /2/users/:id/tweets` only reaches roughly your **most recent 3,200 posts**.
@@ -249,7 +253,7 @@ against *your* app's usage and billing; X's per-user rate limits still apply per
 | `DELETE /2/users/:id/likes/:id` | 50 per 15 minutes, per user | X API v2 |
 | `GET /2/users/:id/tweets` | 900 per 15 minutes, per user (≈3,200 posts reachable) | X API v2 |
 | Threads delete | **100 per profile per 24 hours** | Threads API |
-| Facebook Pages | No published per-endpoint limit; PostCleaner self-paces at 180/hour | Graph API |
+| Facebook Pages | No published per-endpoint limit; DELETE.1999 self-paces at 180/hour | Graph API |
 
 50 deletions per 15 minutes is 200/hour. In practice:
 
@@ -260,7 +264,7 @@ against *your* app's usage and billing; X's per-user rate limits still apply per
 | 20,000 | ~4 days |
 | 50,000 | ~10.5 days |
 
-This is the platform's limit, not a throttle PostCleaner adds. A tool that promises to delete
+This is the platform's limit, not a throttle DELETE.1999 adds. A tool that promises to delete
 20,000 posts in an hour is not using the public API. The job survives the wait: it persists its
 rate window, sleeps between batches with Durable Object alarms, and resumes on its own.
 
@@ -288,7 +292,7 @@ a temporary lock or a challenge. To stay on the right side of it:
 
 - **Don't run two jobs against one account at once.** The rate window is per job.
 - **Don't lower the pacing constants.** They exist because X's limit is a ceiling, not a target.
-- If X starts returning 429s, PostCleaner reads the `x-rate-limit-reset` header and sleeps exactly
+- If X starts returning 429s, DELETE.1999 reads the `x-rate-limit-reset` header and sleeps exactly
   that long. Let it.
 - If your token is revoked mid-job, the job pauses with a clear message rather than burning the
   rate budget on doomed calls. Reconnect and resume.
@@ -368,14 +372,14 @@ To exercise the whole billing path locally without touching Stripe, set
 ## The Facebook reality
 
 **There is no supported way to delete personal-timeline posts through an API.** Not with
-`user_posts`, not with any permission Meta currently grants. PostCleaner will not pretend
+`user_posts`, not with any permission Meta currently grants. DELETE.1999 will not pretend
 otherwise, and will not ship a browser extension that clicks the buttons for you.
 
 What it does provide:
 
 ### 1. Facebook Pages — fully automated
 
-If you administer a Page, the Graph API supports deletion properly. PostCleaner lists your Pages,
+If you administer a Page, the Graph API supports deletion properly. DELETE.1999 lists your Pages,
 enumerates `/{page-id}/posts` (posts published *by* the Page — not other people's posts on it),
 applies your filters, and deletes via `DELETE /{object-id}`. It can also remove comments the Page
 left on its own posts.
@@ -400,7 +404,7 @@ go to a 30-day bin.
 Request **Settings & privacy → Accounts Center → Your information and permissions → Download your
 information**, choose **JSON** (not HTML), include **Posts** and **Comments**, full date range.
 
-Drop the `.zip` into PostCleaner. It parses locally — the file never leaves your browser — and
+Drop the `.zip` into DELETE.1999. It parses locally — the file never leaves your browser — and
 produces a year-by-year breakdown of how many posts and comments you have, how many 50-item
 batches that translates to, and a CSV checklist for tracking which years you've cleared. It also
 repairs Meta's well-known UTF-8 mojibake in exported text.
@@ -495,7 +499,7 @@ throwaway values; the file is git-ignored, but the point is that a laptop is not
 
 | Name | Default | Meaning |
 |---|---|---|
-| `APP_NAME` | `PostCleaner` | Shown in `/api/health` |
+| `APP_NAME` | `DELETE.1999` | Shown in `/api/health` |
 | `PUBLIC_BASE_URL` | *(empty)* | Force the origin used to build OAuth redirect URIs |
 | `X_DELETE_UNIT_COST_USD` | `0.01` | What X charges us per delete. **Measure it** — see [docs/CALIBRATION.md](docs/CALIBRATION.md). Drives every price and margin. |
 
@@ -603,7 +607,7 @@ scripts/
 [X](https://x.com/settings/connected_apps) ·
 [Facebook](https://www.facebook.com/settings?tab=applications) ·
 [Threads](https://www.threads.net/settings/account).
-Disconnecting inside PostCleaner also calls X's revoke endpoint and drops the local copy.
+Disconnecting inside DELETE.1999 also calls X's revoke endpoint and drops the local copy.
 
 ---
 

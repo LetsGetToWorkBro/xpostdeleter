@@ -1,8 +1,8 @@
 {
-  "name": "postcleaner",
+  "name": "delete1999",
   "version": "1.0.0",
   "private": true,
-  "description": "PostCleaner — safely mass-delete your own posts on X (Twitter), Threads and Facebook Pages. Runs entirely on Cloudflare Workers + Durable Objects.",
+  "description": "DELETE.1999 — safely mass-delete your own posts on X (Twitter), Threads and Facebook Pages. Runs entirely on Cloudflare Workers + Durable Objects.",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

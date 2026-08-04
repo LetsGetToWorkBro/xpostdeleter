@@ -1,5 +1,5 @@
 /**
- * PostCleaner front-end.
+ * DELETE.1999 front-end.
  *
  * Deliberately dependency-free: no framework, no build step, no CDN. The whole
  * app is three files the Worker serves straight from the edge.
@@ -118,7 +118,7 @@ const state = {
 const LS = {
   get(key, fallback) {
     try {
-      const v = localStorage.getItem(`postcleaner:${key}`);
+      const v = localStorage.getItem(`delete1999:${key}`);
       return v === null ? fallback : JSON.parse(v);
     } catch {
       return fallback;
@@ -126,7 +126,7 @@ const LS = {
   },
   set(key, value) {
     try {
-      localStorage.setItem(`postcleaner:${key}`, JSON.stringify(value));
+      localStorage.setItem(`delete1999:${key}`, JSON.stringify(value));
     } catch {
       /* private mode — not important enough to warn about */
     }
@@ -135,7 +135,8 @@ const LS = {
 
 /* There is no theme. The page is black text on a white background, the same
  * way the counter next door is, and there is nothing to toggle. The stored
- * `postcleaner:theme` preference from the old design is simply ignored. */
+ * `postcleaner:theme` preference from the old design is simply ignored, along
+ * with every other `postcleaner:*` key — the prefix is `delete1999:` now. */
 
 /* ------------------------------------------------------------------- tabs */
 
@@ -737,7 +738,7 @@ $('#x-connect-btn').addEventListener('click', async () => {
 $('#x-disconnect').addEventListener('click', async () => {
   const ok = await modal.open({
     title: 'Disconnect X?',
-    sub: 'PostCleaner will drop its copy of your token. Any running job for this account will stop at its next step.',
+    sub: 'DELETE.1999 will drop its copy of your token. Any running job for this account will stop at its next step.',
     confirmLabel: 'Disconnect',
     danger: false,
   });
@@ -1155,7 +1156,7 @@ function renderThreads() {
     body.innerHTML = `
       <div class="notice info">${icon('i-info', 17)}<div>
         You'll be asked to grant <code>threads_basic</code> (read your posts) and <code>threads_delete</code> (remove them).
-        Nothing else — PostCleaner cannot post as you.
+        Nothing else — DELETE.1999 cannot post as you.
       </div></div>
       <a class="btn btn-primary" href="/auth/threads/start" style="margin-top:14px;align-self:flex-start">
         ${icon('i-threads')} Connect Threads
@@ -1265,7 +1266,7 @@ function renderFacebook() {
         <button class="btn btn-sm" id="fb-disconnect">Disconnect</button>
       </div>
       <div class="notice warn" style="margin-top:14px">${icon('i-warn', 17)}<div>
-        <strong>No Pages found.</strong> This account doesn't administer any Facebook Pages, so there is nothing here PostCleaner can
+        <strong>No Pages found.</strong> This account doesn't administer any Facebook Pages, so there is nothing here DELETE.1999 can
         delete automatically. Use the Manage Activity guide below for your personal timeline.
       </div></div>`;
   } else {
@@ -1308,7 +1309,7 @@ function renderFacebook() {
       </label>
       <div class="notice warn">${icon('i-warn', 17)}<div>
         Page posts are deleted permanently and immediately — unlike personal posts, they do not go to a bin.
-        PostCleaner paces at ${escapeHtml(String(state.session?.limits?.facebookPagePerHour ?? 180))} deletions per hour to stay well inside Meta's platform budget.
+        DELETE.1999 paces at ${escapeHtml(String(state.session?.limits?.facebookPagePerHour ?? 180))} deletions per hour to stay well inside Meta's platform budget.
       </div></div>
       <button class="btn btn-primary" id="fb-start" style="align-self:flex-start">${icon('i-play')} Start dry run</button>`;
 

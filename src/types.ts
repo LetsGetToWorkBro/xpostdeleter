@@ -1,5 +1,5 @@
 /**
- * Shared types for PostCleaner.
+ * Shared types for DELETE.1999.
  *
  * Nothing in here ever holds a plaintext token in a place that gets logged or
  * returned to the browser — see `lib/crypto.ts` for how credentials are sealed.

@@ -332,7 +332,7 @@ export async function exportLog(request: Request, env: Env, session: SessionCont
   }
 
   if (format === 'json') {
-    return json({ jobId, entries: all }, { headers: { 'content-disposition': `attachment; filename="postcleaner-${jobId}.json"` } });
+    return json({ jobId, entries: all }, { headers: { 'content-disposition': `attachment; filename="delete1999-${jobId}.json"` } });
   }
 
   const esc = (v: unknown) => {
@@ -350,7 +350,7 @@ export async function exportLog(request: Request, env: Env, session: SessionCont
   return text(rows.join('\n'), {
     headers: {
       'content-type': 'text/csv; charset=utf-8',
-      'content-disposition': `attachment; filename="postcleaner-${jobId}.csv"`,
+      'content-disposition': `attachment; filename="delete1999-${jobId}.csv"`,
     },
   });
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# One-shot deploy for PostCleaner.
+# One-shot deploy for DELETE.1999.
 #
 #   ./scripts/deploy.sh
 #

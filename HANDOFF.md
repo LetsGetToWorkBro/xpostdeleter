@@ -9,7 +9,7 @@ real, what is unproven, what was decided and why, and where the traps are.
 
 ## 1. What this is
 
-**PostCleaner** — bulk-deletes your own posts on X, Threads and Facebook Pages,
+**DELETE.1999** — bulk-deletes your own posts on X, Threads and Facebook Pages,
 using official APIs only. One Cloudflare Worker serving both a dependency-free
 SPA and a JSON API, with Durable Objects running jobs that can take days.
 
@@ -33,7 +33,7 @@ Restyle in the stylesheet instead. Two consequences worth knowing:
 
 - `icon()` in `app.js` is a no-op returning `''`. The SVG sprite is gone, and
   `svg { display: none }` catches anything that slips through.
-- There is no theme toggle. Any stored `postcleaner:theme` value is ignored.
+- There is no theme toggle. Any stored `delete1999:theme` value is ignored.
 
 ---
 
@@ -170,7 +170,7 @@ deletes.
 ## 7. Traps that already cost time
 
 **Worker name must match.** Workers Builds names the Worker after the repo
-(`xpostdeleter`). `wrangler.toml` said `postcleaner`, so a build would have
+(`xpostdeleter`). `wrangler.toml` said `delete1999`, so a build would have
 deployed to a *second* Worker while the secrets sat on the first. Symptom
 (secrets set, app unconfigured) points nowhere near the cause.
 
@@ -229,8 +229,9 @@ docs/
    Do this *before* the X app below, because the callback URL has to match the
    final origin character for character and changing it later means editing it
    in X's portal too.
-1. **X developer app.** Signup was in progress at last contact (account name
-   "Postcleaner"). Needs: **Read and write** permissions, type **Web App**, and
+1. **X developer app.** Signup was in progress at last contact under the account
+   name "Postcleaner" — that is the name registered *with X*, from before this
+   was called DELETE.1999, and it is left alone deliberately. Do not chase it. Needs: **Read and write** permissions, type **Web App**, and
    callback exactly `https://delete.1999loc.com/auth/x/callback` — or
    `https://xpostdeleter.nameless-forest-17dc.workers.dev/auth/x/callback` if
    step 0 is skipped. The redirect URI is derived from the request origin

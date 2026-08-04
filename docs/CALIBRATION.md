@@ -1,6 +1,6 @@
 # Calibration: the two numbers the business rests on
 
-Two facts are not publicly documented, and both change what PostCleaner should
+Two facts are not publicly documented, and both change what DELETE.1999 should
 charge — or whether the paid tier should exist at all. Neither can be settled by
 reading; both have to be measured against a real X account.
 
@@ -46,7 +46,7 @@ $0.01/delete, so the code plans against that. But "consistently reported" is not
 
 1. Post a throwaway tweet from the account you'll calibrate against. Copy its
    numeric id from the URL — `https://x.com/you/status/1234567890123456789`.
-2. Connect that account in PostCleaner with **write** permissions.
+2. Connect that account in DELETE.1999 with **write** permissions.
 3. Open the X developer console billing page. **Note the exact credit balance.**
 4. Fire the probe:
 

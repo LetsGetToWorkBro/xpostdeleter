@@ -135,7 +135,7 @@ async function xFetch(
   const { accessToken, ...rest } = init;
   const headers = new Headers(rest.headers);
   headers.set('authorization', `Bearer ${accessToken}`);
-  headers.set('user-agent', 'PostCleaner/1.0 (+https://github.com/letsgettoworkbro/xpostdeleter)');
+  headers.set('user-agent', 'DELETE.1999/1.0 (+https://github.com/letsgettoworkbro/xpostdeleter)');
   if (rest.body && !headers.has('content-type')) headers.set('content-type', 'application/json');
 
   const res = await fetch(path.startsWith('http') ? path : `${X_API}${path}`, { ...rest, headers });
@@ -283,7 +283,7 @@ export interface TimelinePage {
  *
  * Note the hard platform ceiling: this endpoint only reaches roughly the most
  * recent 3,200 posts. For anything older the archive path is the only complete
- * source, which is exactly why PostCleaner leads with it.
+ * source, which is exactly why DELETE.1999 leads with it.
  */
 export async function fetchTimelinePage(
   accessToken: string,
@@ -387,7 +387,7 @@ export async function probeDelete(
   const started = Date.now();
   const headers = new Headers({
     authorization: `Bearer ${accessToken}`,
-    'user-agent': 'PostCleaner/1.0 (calibration probe)',
+    'user-agent': 'DELETE.1999/1.0 (calibration probe)',
   });
   const res = await fetch(`${X_API}/tweets/${encodeURIComponent(tweetId)}`, { method: 'DELETE', headers });
   const durationMs = Date.now() - started;

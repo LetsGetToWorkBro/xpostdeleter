@@ -158,7 +158,7 @@ function parseTwitterDate(value) {
   return Number.isFinite(ms) ? new Date(ms).toISOString() : undefined;
 }
 
-/** One archive tweet record → the minimal shape PostCleaner sends to the API. */
+/** One archive tweet record → the minimal shape DELETE.1999 sends to the API. */
 export function normalizeTweet(entry) {
   const t = entry?.tweet ?? entry;
   if (!t) return null;

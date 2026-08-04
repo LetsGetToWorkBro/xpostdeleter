@@ -219,7 +219,7 @@ export async function createCheckoutSession(
   },
 ): Promise<CheckoutSession> {
   const { quote } = params;
-  const name = `PostCleaner — ${quote.quota.toLocaleString('en-US')} X deletions`;
+  const name = `DELETE.1999 — ${quote.quota.toLocaleString('en-US')} X deletions`;
   const description = quote.metered
     ? `Metered pack for @${params.accountLabel}. Covers ${quote.quota.toLocaleString('en-US')} post deletions.`
     : `${quote.tierLabel} pack for @${params.accountLabel}. Covers up to ${quote.quota.toLocaleString('en-US')} post deletions.`;

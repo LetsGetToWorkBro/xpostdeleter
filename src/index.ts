@@ -1,5 +1,5 @@
 /**
- * PostCleaner — Worker entrypoint.
+ * DELETE.1999 — Worker entrypoint.
  *
  *   /auth/*   OAuth start + callback (X, Facebook, Threads)
  *   /api/*    JSON API, session-cookie authenticated
@@ -173,7 +173,7 @@ export default {
     if (url.pathname === '/api/health') {
       return json({
         ok: true,
-        app: env.APP_NAME ?? 'PostCleaner',
+        app: env.APP_NAME ?? 'DELETE.1999',
         configured: Boolean(env.SESSION_SECRET && env.TOKEN_ENCRYPTION_KEY),
         time: new Date().toISOString(),
       });

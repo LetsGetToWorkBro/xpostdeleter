@@ -20,8 +20,8 @@ const args = Object.fromEntries(
   }, []),
 );
 
-const base = (args.base ?? process.env.POSTCLEANER_BASE ?? '').replace(/\/+$/, '');
-const cookie = args.cookie ?? process.env.POSTCLEANER_COOKIE ?? '';
+const base = (args.base ?? process.env.DELETE1999_BASE ?? '').replace(/\/+$/, '');
+const cookie = args.cookie ?? process.env.DELETE1999_COOKIE ?? '';
 const postId = args.post ?? args.postId;
 
 if (!base || !cookie || !postId) {

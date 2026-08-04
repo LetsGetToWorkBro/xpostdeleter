@@ -1,4 +1,8 @@
 #:schema node_modules/wrangler/config-schema.json
+# The Worker keeps its original name. The product is DELETE.1999, but renaming
+# a Worker creates a *new* one: the Durable Objects (Wallet, DeletionJob) and
+# their stored jobs stay behind on the old name, and the Workers Builds link
+# breaks. Not worth it for a string nobody sees.
 name = "xpostdeleter"
 main = "src/index.ts"
 compatibility_date = "2025-09-01"
@@ -48,12 +52,12 @@ tag = "v2"
 new_sqlite_classes = ["Wallet"]
 
 [vars]
-APP_NAME = "PostCleaner"
+APP_NAME = "DELETE.1999"
 # What X charges us per delete, in USD. X publishes no explicit "Post: Delete"
 # price — measure it with /api/x/probe and set the real value here. See
 # docs/CALIBRATION.md. Every price tier and margin figure derives from this.
 X_DELETE_UNIT_COST_USD = "0.01"
-# Set this to your deployed origin, e.g. "https://postcleaner.example.workers.dev".
+# Set this to your deployed origin, e.g. "https://delete.1999loc.com".
 # Leave empty to derive the origin from the incoming request (fine for most setups,
 # but an explicit value is safer when you sit behind a proxy).
 PUBLIC_BASE_URL = ""
