@@ -8,6 +8,12 @@ going after you close the tab, reboot your laptop, or lose your connection.
 
 ---
 
+> **Picking this up cold, or handing it to someone else?** Read
+> **[HANDOFF.md](HANDOFF.md)** first — it covers what is actually proven vs
+> merely written, the decisions that shouldn't be relitigated, and the traps
+> that already cost time. This README is the reference manual; that one is the
+> state of play.
+
 ## Table of contents
 
 - [What this does — and what it honestly can't](#what-this-does--and-what-it-honestly-cant)
