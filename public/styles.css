@@ -99,6 +99,14 @@ code,
   font-family: "Times New Roman", Times, serif;
 }
 
+/* The 1999LOC toolkit bar, above this app's own tabs. */
+.nav {
+  margin: 4px 0;
+  font-size: 15px;
+  border-top: 1px solid #808080;
+  padding-top: 3px;
+}
+
 /* Tabs: a 1999 nav bar is a row of links separated by pipes. */
 .tabs {
   margin: 8px 0 4px 0;
